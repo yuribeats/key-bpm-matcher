@@ -1,0 +1,24 @@
+{
+  "name": "key-bpm-matcher-2026-03-21",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuribeats/key-bpm-matcher.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yuribeats/key-bpm-matcher/issues"
+  },
+  "homepage": "https://github.com/yuribeats/key-bpm-matcher#readme",
+  "dependencies": {
+    "@libsql/client": "^0.17.2"
+  }
+}

@@ -8,3 +8,9 @@ duuzu.json
 node_modules/
 .vercel
 .env
+combined.db
+acousticbrainz.db
+kaggle.db
+musicoset.db
+spotify.db
+tracks.json

@@ -21,6 +21,31 @@ a { color: #228B22; text-decoration: none; }
 
 h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px; }
 
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.fav-toggle {
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: default;
+  user-select: none;
+}
+.fav-toggle.active {
+  background: #228B22;
+  border-color: #228B22;
+  color: #000;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -75,31 +100,6 @@ input[type="text"]:focus { border-color: #228B22; }
   gap: 8px;
 }
 .bpm-control input[type="text"] { width: 60px; text-align: center; }
-.bpm-range-slider {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.range-bar {
-  width: 200px;
-  height: 6px;
-  background: #222;
-  position: relative;
-}
-.range-fill {
-  position: absolute;
-  height: 100%;
-  background: #228B22;
-}
-.range-handle {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  background: #fff;
-  transform: translate(-50%, -50%);
-  cursor: default;
-}
 
 .stats {
   font-size: 11px;
@@ -137,6 +137,16 @@ input[type="text"]:focus { border-color: #228B22; }
 .bpm-cell { font-variant-numeric: tabular-nums; }
 .no-data { color: #333; }
 .artist-link { color: #228B22; }
+
+.fav-star {
+  font-size: 16px;
+  cursor: default;
+  user-select: none;
+  color: #333;
+  text-align: center;
+  width: 24px;
+}
+.fav-star.favorited { color: #228B22; }
 
 .pagination {
   display: flex;
@@ -181,26 +191,6 @@ input[type="text"]:focus { border-color: #228B22; }
   cursor: default;
 }
 
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-  font-weight: 300;
-}
-
-.data-source {
-  display: flex;
-  gap: 4px;
-}
-.source-dot {
-  width: 8px;
-  height: 8px;
-  display: inline-block;
-}
-.source-bpm { background: #444; }
-.source-key { background: #228B22; }
-.source-both { background: #fff; }
-
 .legend {
   display: flex;
   gap: 16px;
@@ -210,11 +200,30 @@ input[type="text"]:focus { border-color: #228B22; }
   color: #666;
 }
 .legend-item { display: flex; align-items: center; gap: 4px; }
+
+.source-dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+.source-bpm { background: #444; }
+.source-key { background: #228B22; }
+.source-both { background: #fff; }
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-weight: 300;
+}
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>KEY + BPM MATCHER</h1>
+  <div class="header-row">
+    <h1>KEY + BPM MATCHER</h1>
+    <div class="fav-toggle" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
+  </div>
 
   <div class="controls">
     <div class="control-group">
@@ -265,6 +274,7 @@ input[type="text"]:focus { border-color: #228B22; }
     <thead>
       <tr>
         <th></th>
+        <th></th>
         <th class="sortable" data-sort="artist">ARTIST <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
@@ -277,33 +287,56 @@ input[type="text"]:focus { border-color: #228B22; }
   <div class="pagination" id="pagination"></div>
 </div>
 
-<div class="loading" id="loading">LOADING TRACKS...</div>
+<div class="loading" id="loading" style="display:none"></div>
 
 <script>
 const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const ALL_KEYS = [];
-NOTES.forEach(n => { ALL_KEYS.push(n + ' Major'); ALL_KEYS.push(n + ' Minor'); });
-
-const CAMELOT = {
-  'Ab Major': '4B', 'Eb Major': '3B', 'Bb Major': '6B', 'F Major': '7B',
-  'C Major': '8B', 'G Major': '9B', 'D Major': '10B', 'A Major': '11B',
-  'E Major': '12B', 'B Major': '1B', 'Gb Major': '2B', 'Db Major': '3B',
-  'Ab Minor': '1A', 'Eb Minor': '2A', 'Bb Minor': '3A', 'F Minor': '4A',
-  'C Minor': '5A', 'G Minor': '6A', 'D Minor': '7A', 'A Minor': '8A',
-  'E Minor': '9A', 'B Minor': '10A', 'Gb Minor': '11A', 'Db Minor': '12A'
-};
-
-let allTracks = [];
-let filtered = [];
-let sortCol = 'artist';
-let sortDir = 1;
-let page = 0;
 const PER_PAGE = 100;
+
+let sortCol = 'artist';
+let sortDir = 'asc';
+let page = 0;
+let totalResults = 0;
 let selectedKeys = new Set();
 let dataFilter = 'all';
+let showingFavorites = false;
+let currentTracks = [];
+
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem('kbm_favorites') || '{}');
+  } catch { return {}; }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem('kbm_favorites', JSON.stringify(favs));
+  document.getElementById('favCount').textContent = Object.keys(favs).length;
+}
+
+function toggleFavorite(track) {
+  const favs = getFavorites();
+  const key = (track.artist + '|||' + track.title).toLowerCase();
+  if (favs[key]) {
+    delete favs[key];
+  } else {
+    favs[key] = { artist: track.artist, title: track.title, bpm: track.bpm, key: track.key };
+  }
+  saveFavorites(favs);
+  if (showingFavorites) {
+    renderFavorites();
+  } else {
+    render(currentTracks);
+  }
+}
+
+function isFavorited(artist, title) {
+  const favs = getFavorites();
+  return !!favs[(artist + '|||' + title).toLowerCase()];
+}
 
 function init() {
-  // Build key buttons - major row
+  document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
+
   const majSel = document.getElementById('keyMajor');
   NOTES.forEach(n => {
     const k = n + ' Major';
@@ -314,7 +347,6 @@ function init() {
     btn.addEventListener('click', () => toggleKey(k, btn));
     majSel.appendChild(btn);
   });
-  // Minor row
   const minSel = document.getElementById('keyMinor');
   NOTES.forEach(n => {
     const k = n + ' Minor';
@@ -326,64 +358,53 @@ function init() {
     minSel.appendChild(btn);
   });
 
-  // Data filter buttons
   ['filterAll','filterBoth','filterBpm','filterKey'].forEach(id => {
     document.getElementById(id).addEventListener('click', e => {
       document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       dataFilter = e.target.dataset.filter;
-      applyFilters();
+      page = 0;
+      fetchTracks();
     });
   });
 
-  // Sort headers
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.sort;
-      if (sortCol === col) sortDir *= -1;
-      else { sortCol = col; sortDir = 1; }
+      if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortCol = col; sortDir = 'asc'; }
       document.querySelectorAll('.sort-arrow').forEach(s => s.textContent = '');
-      th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '\u25B2' : '\u25BC';
-      applySort();
-      render();
+      th.querySelector('.sort-arrow').textContent = sortDir === 'asc' ? '\u25B2' : '\u25BC';
+      page = 0;
+      fetchTracks();
     });
   });
 
-  // Search
   let searchTimeout;
   document.getElementById('search').addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applyFilters, 200);
+    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
   });
   document.getElementById('bpmMin').addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applyFilters, 200);
+    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
   });
   document.getElementById('bpmMax').addEventListener('input', () => {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applyFilters, 200);
+    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
   });
 
-  loadData();
-}
+  document.getElementById('favToggle').addEventListener('click', () => {
+    showingFavorites = !showingFavorites;
+    document.getElementById('favToggle').classList.toggle('active', showingFavorites);
+    if (showingFavorites) {
+      renderFavorites();
+    } else {
+      fetchTracks();
+    }
+  });
 
-async function loadData() {
-  const resp = await fetch('tracks.json');
-  const data = await resp.json();
-  allTracks = data.map((t, i) => ({
-    id: i,
-    artist: t.artist || '',
-    title: t.title || '',
-    bpm: t.bpm,
-    duration: t.duration || '',
-    year: t.year,
-    genre: t.genre || '',
-    key: t.key || null,
-    hasBpm: t.bpm != null,
-    hasKey: t.key != null
-  }));
-  document.getElementById('loading').style.display = 'none';
-  applyFilters();
+  fetchTracks();
 }
 
 function toggleKey(k, btn) {
@@ -394,75 +415,87 @@ function toggleKey(k, btn) {
     selectedKeys.add(k);
     btn.classList.add('active');
   }
-  applyFilters();
-}
-
-function applyFilters() {
-  const q = document.getElementById('search').value.toLowerCase().trim();
-  const bpmMinVal = parseFloat(document.getElementById('bpmMin').value) || 0;
-  const bpmMaxVal = parseFloat(document.getElementById('bpmMax').value) || 999;
-
-  filtered = allTracks.filter(t => {
-    if (q && !t.artist.toLowerCase().includes(q) && !t.title.toLowerCase().includes(q)) return false;
-    if (selectedKeys.size > 0 && (!t.key || !selectedKeys.has(t.key))) return false;
-    if (bpmMinVal > 0 && (!t.bpm || t.bpm < bpmMinVal)) return false;
-    if (bpmMaxVal < 999 && (!t.bpm || t.bpm > bpmMaxVal)) return false;
-    if (dataFilter === 'both' && (!t.hasBpm || !t.hasKey)) return false;
-    if (dataFilter === 'bpm' && !t.hasBpm) return false;
-    if (dataFilter === 'key' && !t.hasKey) return false;
-    return true;
-  });
-
-  applySort();
   page = 0;
   updatePills();
-  render();
+  fetchTracks();
 }
 
-function applySort() {
-  filtered.sort((a, b) => {
-    let va = a[sortCol], vb = b[sortCol];
+async function fetchTracks() {
+  if (showingFavorites) { renderFavorites(); return; }
+
+  const q = document.getElementById('search').value.trim();
+  const bpmMin = document.getElementById('bpmMin').value.trim();
+  const bpmMax = document.getElementById('bpmMax').value.trim();
+
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
+  if (bpmMin) params.set('bpmMin', bpmMin);
+  if (bpmMax) params.set('bpmMax', bpmMax);
+  if (dataFilter !== 'all') params.set('filter', dataFilter);
+  params.set('sort', sortCol);
+  params.set('dir', sortDir);
+  params.set('page', page);
+  params.set('limit', PER_PAGE);
+
+  try {
+    const resp = await fetch('/api/search?' + params.toString());
+    const data = await resp.json();
+    totalResults = data.total;
+    currentTracks = data.tracks;
+    render(data.tracks);
+  } catch (err) {
+    document.getElementById('stats').innerHTML = '<span style="color:red">ERROR LOADING DATA</span>';
+  }
+}
+
+function renderFavorites() {
+  const favs = getFavorites();
+  const q = document.getElementById('search').value.trim().toLowerCase();
+  const bpmMin = parseFloat(document.getElementById('bpmMin').value) || 0;
+  const bpmMax = parseFloat(document.getElementById('bpmMax').value) || 999;
+
+  let tracks = Object.values(favs).map(f => ({
+    artist: f.artist, title: f.title, bpm: f.bpm, key: f.key
+  }));
+
+  if (q) tracks = tracks.filter(t => t.artist.toLowerCase().includes(q) || t.title.toLowerCase().includes(q));
+  if (selectedKeys.size > 0) tracks = tracks.filter(t => t.key && selectedKeys.has(t.key));
+  if (bpmMin > 0) tracks = tracks.filter(t => t.bpm && t.bpm >= bpmMin);
+  if (bpmMax < 999) tracks = tracks.filter(t => t.bpm && t.bpm <= bpmMax);
+  if (dataFilter === 'both') tracks = tracks.filter(t => t.bpm && t.key);
+  else if (dataFilter === 'bpm') tracks = tracks.filter(t => t.bpm);
+  else if (dataFilter === 'key') tracks = tracks.filter(t => t.key);
+
+  tracks.sort((a, b) => {
+    let va = a[sortCol === 'key' ? 'key' : sortCol], vb = b[sortCol === 'key' ? 'key' : sortCol];
     if (va == null && vb == null) return 0;
     if (va == null) return 1;
     if (vb == null) return -1;
-    if (typeof va === 'string') {
-      return va.localeCompare(vb) * sortDir;
-    }
-    return (va - vb) * sortDir;
+    if (typeof va === 'string') return va.localeCompare(vb) * (sortDir === 'asc' ? 1 : -1);
+    return (va - vb) * (sortDir === 'asc' ? 1 : -1);
   });
+
+  totalResults = tracks.length;
+  currentTracks = tracks.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+  render(currentTracks);
 }
 
-function updatePills() {
-  const pills = document.getElementById('filterPills');
-  pills.innerHTML = '';
-  selectedKeys.forEach(k => {
-    const pill = document.createElement('div');
-    pill.className = 'filter-pill';
-    pill.innerHTML = esc(k) + ' <span class="remove">x</span>';
-    pill.querySelector('.remove').addEventListener('click', () => {
-      selectedKeys.delete(k);
-      const btn = document.querySelector('.key-btn[data-key="' + k + '"]');
-      if (btn) btn.classList.remove('active');
-      applyFilters();
-    });
-    pills.appendChild(pill);
-  });
-}
-
-function render() {
+function render(tracks) {
   const stats = document.getElementById('stats');
-  stats.innerHTML = `<span>${filtered.length.toLocaleString()}</span> TRACKS`;
+  stats.innerHTML = `<span>${totalResults.toLocaleString()}</span> TRACKS`;
 
   const tbody = document.getElementById('results');
-  const start = page * PER_PAGE;
-  const slice = filtered.slice(start, start + PER_PAGE);
-
-  tbody.innerHTML = slice.map(t => {
-    const sourceClass = t.hasBpm && t.hasKey ? 'source-both' : t.hasBpm ? 'source-bpm' : 'source-key';
-    const bpmStr = t.bpm != null ? t.bpm.toFixed(1) : '<span class="no-data">-</span>';
-    const keyStr = t.key ? esc(t.key) : '<span class="no-data">-</span>';
+  tbody.innerHTML = tracks.map(t => {
+    const hasBpm = t.bpm != null;
+    const hasKey = t.key != null;
+    const sourceClass = hasBpm && hasKey ? 'source-both' : hasBpm ? 'source-bpm' : 'source-key';
+    const bpmStr = hasBpm ? parseFloat(t.bpm).toFixed(1) : '<span class="no-data">-</span>';
+    const keyStr = hasKey ? esc(t.key) : '<span class="no-data">-</span>';
+    const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
       <td><span class="source-dot ${sourceClass}"></span></td>
+      <td><span class="fav-star${favClass}" data-artist="${esc(t.artist)}" data-title="${esc(t.title)}" data-bpm="${t.bpm || ''}" data-key="${t.key || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
       <td class="artist-link" data-artist="${esc(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
       <td class="bpm-cell">${bpmStr}</td>
@@ -470,19 +503,31 @@ function render() {
     </tr>`;
   }).join('');
 
-  renderPagination();
+  tbody.querySelectorAll('.fav-star').forEach(el => {
+    el.addEventListener('click', () => {
+      toggleFavorite({
+        artist: el.dataset.artist,
+        title: el.dataset.title,
+        bpm: el.dataset.bpm ? parseFloat(el.dataset.bpm) : null,
+        key: el.dataset.key || null
+      });
+    });
+  });
 
   tbody.querySelectorAll('.artist-link').forEach(el => {
     el.addEventListener('click', () => {
-      const name = el.dataset.artist;
-      document.getElementById('search').value = name;
-      applyFilters();
+      document.getElementById('search').value = el.dataset.artist;
+      page = 0;
+      if (showingFavorites) renderFavorites();
+      else fetchTracks();
     });
   });
+
+  renderPagination();
 }
 
 function renderPagination() {
-  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const totalPages = Math.ceil(totalResults / PER_PAGE);
   const pag = document.getElementById('pagination');
   if (totalPages <= 1) { pag.innerHTML = ''; return; }
 
@@ -509,14 +554,35 @@ function renderPagination() {
       const p = parseInt(btn.dataset.page);
       if (p >= 0 && p < totalPages) {
         page = p;
-        render();
+        if (showingFavorites) renderFavorites();
+        else fetchTracks();
         window.scrollTo(0, 0);
       }
     });
   });
 }
 
+function updatePills() {
+  const pills = document.getElementById('filterPills');
+  pills.innerHTML = '';
+  selectedKeys.forEach(k => {
+    const pill = document.createElement('div');
+    pill.className = 'filter-pill';
+    pill.innerHTML = esc(k) + ' <span class="remove">X</span>';
+    pill.querySelector('.remove').addEventListener('click', () => {
+      selectedKeys.delete(k);
+      const btn = document.querySelector('.key-btn[data-key="' + k + '"]');
+      if (btn) btn.classList.remove('active');
+      page = 0;
+      updatePills();
+      fetchTracks();
+    });
+    pills.appendChild(pill);
+  });
+}
+
 function esc(s) {
+  if (!s) return '';
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
