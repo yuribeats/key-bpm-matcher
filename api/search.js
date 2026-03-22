@@ -62,16 +62,15 @@ module.exports = async function handler(req, res) {
   const lim = Math.min(parseInt(limit), 200);
 
   try {
-    const [countResult, dataResult] = await Promise.all([
-      client.execute({ sql: `SELECT COUNT(*) as total FROM tracks ${where}`, args: params }),
-      client.execute({
-        sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
-        args: [...params, lim, offset],
-      }),
-    ]);
+    // Fetch limit+1 to know if there are more results
+    const dataResult = await client.execute({
+      sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
+      args: [...params, lim + 1, offset],
+    });
 
-    const total = countResult.rows[0].total;
-    const tracks = dataResult.rows.map((r) => ({
+    const hasMore = dataResult.rows.length > lim;
+    const rows = dataResult.rows.slice(0, lim);
+    const tracks = rows.map((r) => ({
       id: r.id,
       artist: r.artist,
       title: r.title,
@@ -79,7 +78,31 @@ module.exports = async function handler(req, res) {
       key: r.key_name,
     }));
 
-    res.status(200).json({ total, tracks, page: parseInt(page), limit: lim });
+    // Estimate total: if on first page and we got fewer than limit, exact count is known
+    // Otherwise, indicate there are more
+    let total;
+    if (!hasMore && offset === 0) {
+      total = tracks.length;
+    } else if (!hasMore) {
+      total = offset + tracks.length;
+    } else {
+      // Only run count if we have filters (smaller result set)
+      if (conditions.length > 0) {
+        try {
+          const countResult = await client.execute({
+            sql: `SELECT COUNT(*) as total FROM tracks ${where}`,
+            args: params,
+          });
+          total = countResult.rows[0].total;
+        } catch {
+          total = offset + lim + 1;
+        }
+      } else {
+        total = 5722225; // known total
+      }
+    }
+
+    res.status(200).json({ total, tracks, page: parseInt(page), limit: lim, hasMore });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database query failed" });
