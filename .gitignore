@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+bpm.db
+keys.db
+duuzu.db
+duuzu.json
+node_modules/

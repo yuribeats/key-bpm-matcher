@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEY + BPM MATCHER</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #000;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 1.4;
+}
+a { color: #228B22; text-decoration: none; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
+
+.control-group { display: flex; flex-direction: column; gap: 4px; }
+.control-group label { font-size: 10px; font-weight: 300; letter-spacing: 1px; color: #888; }
+
+input[type="text"] {
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  width: 200px;
+}
+input[type="text"]:focus { border-color: #228B22; }
+
+.key-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.key-btn {
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 6px 10px;
+  cursor: default;
+  user-select: none;
+}
+.key-btn.active {
+  background: #228B22;
+  border-color: #228B22;
+  color: #000;
+}
+
+.bpm-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bpm-control input[type="text"] { width: 60px; text-align: center; }
+.bpm-range-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.range-bar {
+  width: 200px;
+  height: 6px;
+  background: #222;
+  position: relative;
+}
+.range-fill {
+  position: absolute;
+  height: 100%;
+  background: #228B22;
+}
+.range-handle {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  cursor: default;
+}
+
+.stats {
+  font-size: 11px;
+  font-weight: 300;
+  color: #666;
+  margin-bottom: 12px;
+}
+.stats span { color: #228B22; }
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.results-table th {
+  text-align: left;
+  font-size: 10px;
+  font-weight: 300;
+  color: #666;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #222;
+}
+.results-table th.sortable { cursor: default; }
+.results-table th.sortable:hover { color: #228B22; }
+.results-table th .sort-arrow { font-size: 8px; margin-left: 4px; }
+
+.results-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #111;
+  font-weight: 300;
+}
+.results-table tr:hover td { background: #0a0a0a; }
+
+.key-cell { color: #228B22; font-weight: 700; }
+.bpm-cell { font-variant-numeric: tabular-nums; }
+.no-data { color: #333; }
+
+.pagination {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+  align-items: center;
+}
+.page-btn {
+  background: #111;
+  border: 1px solid #333;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 6px 10px;
+  cursor: default;
+  user-select: none;
+}
+.page-btn.active { background: #228B22; border-color: #228B22; color: #000; }
+.page-btn.disabled { color: #333; }
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.filter-pill {
+  background: #1a1a1a;
+  border: 1px solid #228B22;
+  color: #228B22;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.filter-pill .remove {
+  font-size: 14px;
+  cursor: default;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-weight: 300;
+}
+
+.data-source {
+  display: flex;
+  gap: 4px;
+}
+.source-dot {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+}
+.source-bpm { background: #444; }
+.source-key { background: #228B22; }
+.source-both { background: #fff; }
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 10px;
+  font-weight: 300;
+  color: #666;
+}
+.legend-item { display: flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>KEY + BPM MATCHER</h1>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>SEARCH</label>
+      <input type="text" id="search" placeholder="ARTIST OR TITLE">
+    </div>
+
+    <div class="control-group">
+      <label>KEY (MAJOR)</label>
+      <div class="key-selector" id="keyMajor"></div>
+    </div>
+    <div class="control-group">
+      <label>KEY (MINOR)</label>
+      <div class="key-selector" id="keyMinor"></div>
+    </div>
+
+    <div class="control-group">
+      <label>BPM RANGE</label>
+      <div class="bpm-control">
+        <input type="text" id="bpmMin" placeholder="MIN" value="">
+        <span style="color:#333">-</span>
+        <input type="text" id="bpmMax" placeholder="MAX" value="">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>GENRE</label>
+      <input type="text" id="genreSearch" placeholder="FILTER GENRE">
+    </div>
+
+    <div class="control-group">
+      <label>DATA</label>
+      <div class="key-selector">
+        <div class="key-btn active" data-filter="all" id="filterAll">ALL</div>
+        <div class="key-btn" data-filter="both" id="filterBoth">BPM + KEY</div>
+        <div class="key-btn" data-filter="bpm" id="filterBpm">BPM ONLY</div>
+        <div class="key-btn" data-filter="key" id="filterKey">KEY ONLY</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-pills" id="filterPills"></div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="source-dot source-both"></span> BPM + KEY</div>
+    <div class="legend-item"><span class="source-dot source-bpm"></span> BPM ONLY</div>
+    <div class="legend-item"><span class="source-dot source-key"></span> KEY ONLY</div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th class="sortable" data-sort="artist">ARTIST <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="key">KEY <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="year">YEAR <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="genre">GENRE <span class="sort-arrow"></span></th>
+      </tr>
+    </thead>
+    <tbody id="results"></tbody>
+  </table>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<div class="loading" id="loading">LOADING TRACKS...</div>
+
+<script>
+const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const ALL_KEYS = [];
+NOTES.forEach(n => { ALL_KEYS.push(n + ' Major'); ALL_KEYS.push(n + ' Minor'); });
+
+const CAMELOT = {
+  'Ab Major': '4B', 'Eb Major': '3B', 'Bb Major': '6B', 'F Major': '7B',
+  'C Major': '8B', 'G Major': '9B', 'D Major': '10B', 'A Major': '11B',
+  'E Major': '12B', 'B Major': '1B', 'Gb Major': '2B', 'Db Major': '3B',
+  'Ab Minor': '1A', 'Eb Minor': '2A', 'Bb Minor': '3A', 'F Minor': '4A',
+  'C Minor': '5A', 'G Minor': '6A', 'D Minor': '7A', 'A Minor': '8A',
+  'E Minor': '9A', 'B Minor': '10A', 'Gb Minor': '11A', 'Db Minor': '12A'
+};
+
+let allTracks = [];
+let filtered = [];
+let sortCol = 'artist';
+let sortDir = 1;
+let page = 0;
+const PER_PAGE = 100;
+let selectedKeys = new Set();
+let dataFilter = 'all';
+
+function init() {
+  // Build key buttons - major row
+  const majSel = document.getElementById('keyMajor');
+  NOTES.forEach(n => {
+    const k = n + ' Major';
+    const btn = document.createElement('div');
+    btn.className = 'key-btn';
+    btn.textContent = n;
+    btn.dataset.key = k;
+    btn.addEventListener('click', () => toggleKey(k, btn));
+    majSel.appendChild(btn);
+  });
+  // Minor row
+  const minSel = document.getElementById('keyMinor');
+  NOTES.forEach(n => {
+    const k = n + ' Minor';
+    const btn = document.createElement('div');
+    btn.className = 'key-btn';
+    btn.textContent = n;
+    btn.dataset.key = k;
+    btn.addEventListener('click', () => toggleKey(k, btn));
+    minSel.appendChild(btn);
+  });
+
+  // Data filter buttons
+  ['filterAll','filterBoth','filterBpm','filterKey'].forEach(id => {
+    document.getElementById(id).addEventListener('click', e => {
+      document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      dataFilter = e.target.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  // Sort headers
+  document.querySelectorAll('.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (sortCol === col) sortDir *= -1;
+      else { sortCol = col; sortDir = 1; }
+      document.querySelectorAll('.sort-arrow').forEach(s => s.textContent = '');
+      th.querySelector('.sort-arrow').textContent = sortDir === 1 ? '\u25B2' : '\u25BC';
+      applySort();
+      render();
+    });
+  });
+
+  // Search
+  let searchTimeout;
+  document.getElementById('search').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 200);
+  });
+  document.getElementById('genreSearch').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 200);
+  });
+  document.getElementById('bpmMin').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 200);
+  });
+  document.getElementById('bpmMax').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(applyFilters, 200);
+  });
+
+  loadData();
+}
+
+async function loadData() {
+  const resp = await fetch('tracks.json');
+  const data = await resp.json();
+  allTracks = data.map((t, i) => ({
+    id: i,
+    artist: t.artist || '',
+    title: t.title || '',
+    bpm: t.bpm,
+    duration: t.duration || '',
+    year: t.year,
+    genre: t.genre || '',
+    key: t.key || null,
+    hasBpm: t.bpm != null,
+    hasKey: t.key != null
+  }));
+  document.getElementById('loading').style.display = 'none';
+  applyFilters();
+}
+
+function toggleKey(k, btn) {
+  if (selectedKeys.has(k)) {
+    selectedKeys.delete(k);
+    btn.classList.remove('active');
+  } else {
+    selectedKeys.add(k);
+    btn.classList.add('active');
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const gq = document.getElementById('genreSearch').value.toLowerCase().trim();
+  const bpmMinVal = parseFloat(document.getElementById('bpmMin').value) || 0;
+  const bpmMaxVal = parseFloat(document.getElementById('bpmMax').value) || 999;
+
+  filtered = allTracks.filter(t => {
+    if (q && !t.artist.toLowerCase().includes(q) && !t.title.toLowerCase().includes(q)) return false;
+    if (gq && !t.genre.toLowerCase().includes(gq)) return false;
+    if (selectedKeys.size > 0 && (!t.key || !selectedKeys.has(t.key))) return false;
+    if (bpmMinVal > 0 && (!t.bpm || t.bpm < bpmMinVal)) return false;
+    if (bpmMaxVal < 999 && (!t.bpm || t.bpm > bpmMaxVal)) return false;
+    if (dataFilter === 'both' && (!t.hasBpm || !t.hasKey)) return false;
+    if (dataFilter === 'bpm' && !t.hasBpm) return false;
+    if (dataFilter === 'key' && !t.hasKey) return false;
+    return true;
+  });
+
+  applySort();
+  page = 0;
+  updatePills();
+  render();
+}
+
+function applySort() {
+  filtered.sort((a, b) => {
+    let va = a[sortCol], vb = b[sortCol];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === 'string') {
+      return va.localeCompare(vb) * sortDir;
+    }
+    return (va - vb) * sortDir;
+  });
+}
+
+function updatePills() {
+  const pills = document.getElementById('filterPills');
+  pills.innerHTML = '';
+  selectedKeys.forEach(k => {
+    const pill = document.createElement('div');
+    pill.className = 'filter-pill';
+    pill.innerHTML = esc(k) + ' <span class="remove">x</span>';
+    pill.querySelector('.remove').addEventListener('click', () => {
+      selectedKeys.delete(k);
+      const btn = document.querySelector('.key-btn[data-key="' + k + '"]');
+      if (btn) btn.classList.remove('active');
+      applyFilters();
+    });
+    pills.appendChild(pill);
+  });
+}
+
+function render() {
+  const stats = document.getElementById('stats');
+  stats.innerHTML = `<span>${filtered.length.toLocaleString()}</span> TRACKS`;
+
+  const tbody = document.getElementById('results');
+  const start = page * PER_PAGE;
+  const slice = filtered.slice(start, start + PER_PAGE);
+
+  tbody.innerHTML = slice.map(t => {
+    const sourceClass = t.hasBpm && t.hasKey ? 'source-both' : t.hasBpm ? 'source-bpm' : 'source-key';
+    const bpmStr = t.bpm != null ? t.bpm.toFixed(1) : '<span class="no-data">-</span>';
+    const keyStr = t.key ? esc(t.key) : '<span class="no-data">-</span>';
+    const yearStr = t.year || '<span class="no-data">-</span>';
+    const genreStr = t.genre || '<span class="no-data">-</span>';
+    return `<tr>
+      <td><span class="source-dot ${sourceClass}"></span></td>
+      <td>${esc(t.artist)}</td>
+      <td>${esc(t.title)}</td>
+      <td class="bpm-cell">${bpmStr}</td>
+      <td class="key-cell">${keyStr}</td>
+      <td>${yearStr}</td>
+      <td>${genreStr}</td>
+    </tr>`;
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination() {
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+
+  let html = '';
+  const prevClass = page === 0 ? ' disabled' : '';
+  html += `<div class="page-btn${prevClass}" data-page="${page-1}">PREV</div>`;
+
+  const maxButtons = 10;
+  let startP = Math.max(0, page - Math.floor(maxButtons/2));
+  let endP = Math.min(totalPages, startP + maxButtons);
+  if (endP - startP < maxButtons) startP = Math.max(0, endP - maxButtons);
+
+  for (let i = startP; i < endP; i++) {
+    const active = i === page ? ' active' : '';
+    html += `<div class="page-btn${active}" data-page="${i}">${i+1}</div>`;
+  }
+
+  const nextClass = page >= totalPages - 1 ? ' disabled' : '';
+  html += `<div class="page-btn${nextClass}" data-page="${page+1}">NEXT</div>`;
+
+  pag.innerHTML = html;
+  pag.querySelectorAll('.page-btn:not(.disabled)').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = parseInt(btn.dataset.page);
+      if (p >= 0 && p < totalPages) {
+        page = p;
+        render();
+        window.scrollTo(0, 0);
+      }
+    });
+  });
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+init();
+</script>
+</body>
+</html>
