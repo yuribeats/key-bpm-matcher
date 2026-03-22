@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
 
   const bMin = bpmMin ? parseFloat(bpmMin) : parseFloat(bpmMax);
   const bMax = bpmMax ? parseFloat(bpmMax) : parseFloat(bpmMin);
-  const semiRange = Math.min(Math.max(parseInt(range) || 3, 1), 6);
+  const semiRange = Math.min(Math.max(parseInt(range) || 3, 1), 10);
   const lim = Math.min(parseInt(limit) || 10, 50);
 
   const queries = [];
