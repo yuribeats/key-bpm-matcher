@@ -490,7 +490,7 @@ function render(tracks) {
     const hasBpm = t.bpm != null;
     const hasKey = t.key != null;
     const sourceClass = hasBpm && hasKey ? 'source-both' : hasBpm ? 'source-bpm' : 'source-key';
-    const bpmStr = hasBpm ? parseFloat(t.bpm).toFixed(1) : '<span class="no-data">-</span>';
+    const bpmStr = hasBpm ? Math.round(parseFloat(t.bpm)).toString() : '<span class="no-data">-</span>';
     const keyStr = hasKey ? esc(t.key) : '<span class="no-data">-</span>';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>

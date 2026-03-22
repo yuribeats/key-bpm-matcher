@@ -37,12 +37,12 @@ module.exports = async function handler(req, res) {
   }
 
   if (bpmMin) {
-    conditions.push("bpm >= ?");
-    params.push(parseFloat(bpmMin));
+    conditions.push("ROUND(bpm) >= ?");
+    params.push(Math.round(parseFloat(bpmMin)));
   }
   if (bpmMax) {
-    conditions.push("bpm <= ?");
-    params.push(parseFloat(bpmMax));
+    conditions.push("ROUND(bpm) <= ?");
+    params.push(Math.round(parseFloat(bpmMax)));
   }
 
   if (filter === "both") {
