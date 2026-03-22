@@ -41,11 +41,11 @@ module.exports = async function handler(req, res) {
 
   if (bpmMin) {
     conditions.push("bpm >= ?");
-    params.push(parseFloat(bpmMin) - 0.5);
+    params.push(parseFloat(bpmMin) - 0.05);
   }
   if (bpmMax) {
     conditions.push("bpm < ?");
-    params.push(parseFloat(bpmMax) + 0.5);
+    params.push(parseFloat(bpmMax) + 0.05);
   }
 
   if (conditions.length === 0) {
