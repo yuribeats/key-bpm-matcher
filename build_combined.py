@@ -3,17 +3,71 @@ import json
 
 conn = sqlite3.connect(":memory:")
 
-# Load all three databases
-conn.execute("ATTACH DATABASE 'bpm.db' AS bdb")
-conn.execute("ATTACH DATABASE 'keys.db' AS kdb")
-conn.execute("ATTACH DATABASE 'duuzu.db' AS ddb")
+# Attach all source databases
+conn.execute("ATTACH DATABASE 'bpm.db' AS bdb")        # Waterloo BPM
+conn.execute("ATTACH DATABASE 'keys.db' AS kdb")        # SongKeyFinder
+conn.execute("ATTACH DATABASE 'duuzu.db' AS ddb")       # duuzu
+conn.execute("ATTACH DATABASE 'kaggle.db' AS kagdb")    # Kaggle Spotify
+conn.execute("ATTACH DATABASE 'musicoset.db' AS mdb")   # MusicOSet
 
-# Strategy: build a unified view
-# 1. Start with BPM db (has bpm, year, genre, duration)
-# 2. Join key db (has key)
-# 3. Join duuzu db (has key + bpm)
-# 4. Add duuzu-only tracks
-# 5. Add key-only tracks
+# Create staging table - dump everything in, then dedupe
+conn.execute("""
+    CREATE TABLE stage (
+        artist TEXT,
+        title TEXT,
+        bpm REAL,
+        key_name TEXT,
+        duration TEXT,
+        year INTEGER,
+        genre TEXT,
+        source TEXT
+    )
+""")
+
+# 1. Waterloo BPM db (has bpm, year, genre, duration - no key)
+conn.execute("""
+    INSERT INTO stage (artist, title, bpm, duration, year, genre, source)
+    SELECT artist, title, bpm, duration, year, genre, 'waterloo'
+    FROM bdb.tracks
+""")
+print(f"After Waterloo: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
+# 2. SongKeyFinder (has key - no bpm)
+conn.execute("""
+    INSERT INTO stage (artist, title, key_name, source)
+    SELECT artist, title, key_name, 'songkeyfinder'
+    FROM kdb.tracks
+""")
+print(f"After SongKeyFinder: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
+# 3. duuzu (has key + bpm)
+conn.execute("""
+    INSERT INTO stage (artist, title, bpm, key_name, source)
+    SELECT artist, title, bpm, key_name, 'duuzu'
+    FROM ddb.tracks
+""")
+print(f"After duuzu: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
+# 4. Kaggle Spotify (has key + bpm + genre)
+conn.execute("""
+    INSERT INTO stage (artist, title, bpm, key_name, genre, source)
+    SELECT artist, title, bpm, key_name, genre, 'kaggle'
+    FROM kagdb.tracks
+""")
+print(f"After Kaggle: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
+# 5. MusicOSet (has key + bpm)
+conn.execute("""
+    INSERT INTO stage (artist, title, bpm, key_name, source)
+    SELECT artist, title, bpm, key_name, 'musicoset'
+    FROM mdb.tracks
+""")
+print(f"After MusicOSet: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
+# Now dedupe: group by normalized artist+title, pick best data
+# Priority for key: duuzu > songkeyfinder > kaggle > musicoset
+# Priority for bpm: waterloo > duuzu > kaggle > musicoset
+print("\nDeduplicating...")
 
 conn.execute("""
     CREATE TABLE combined (
@@ -21,115 +75,74 @@ conn.execute("""
         artist TEXT,
         title TEXT,
         bpm REAL,
+        key_name TEXT,
         duration TEXT,
         year INTEGER,
-        genre TEXT,
-        key_name TEXT
+        genre TEXT
     )
 """)
 
-# Step 1: BPM db (deduped) + key db + duuzu
 conn.execute("""
-    INSERT INTO combined (artist, title, bpm, duration, year, genre, key_name)
+    INSERT INTO combined (artist, title, bpm, key_name, duration, year, genre)
     SELECT
-        b.artist,
-        b.title,
-        b.bpm,
-        b.duration,
-        b.year,
-        b.genre,
-        COALESCE(d.key_name, k.key_name) as key_name
-    FROM (
-        SELECT artist, title, MIN(bpm) as bpm, duration, year, genre
-        FROM bdb.tracks
-        GROUP BY artist COLLATE NOCASE, title COLLATE NOCASE
-    ) b
-    LEFT JOIN (
-        SELECT artist, title, key_name, MAX(popularity) as popularity
-        FROM kdb.tracks
-        GROUP BY artist COLLATE NOCASE, title COLLATE NOCASE
-    ) k ON b.artist = k.artist COLLATE NOCASE AND b.title = k.title COLLATE NOCASE
-    LEFT JOIN (
-        SELECT artist, title, key_name, bpm
-        FROM ddb.tracks
-        GROUP BY artist COLLATE NOCASE, title COLLATE NOCASE
-    ) d ON b.artist = d.artist COLLATE NOCASE AND b.title = d.title COLLATE NOCASE
-""")
-
-bpm_count = conn.execute("SELECT COUNT(*) FROM combined").fetchone()[0]
-print(f"After BPM db merge: {bpm_count}")
-
-# Step 2: Add duuzu-only tracks (not in BPM db)
-conn.execute("""
-    INSERT INTO combined (artist, title, bpm, key_name)
-    SELECT d.artist, d.title, d.bpm, d.key_name
-    FROM (
-        SELECT artist, title, bpm, key_name
-        FROM ddb.tracks
-        GROUP BY artist COLLATE NOCASE, title COLLATE NOCASE
-    ) d
-    LEFT JOIN (
-        SELECT DISTINCT artist, title FROM bdb.tracks
-    ) b ON d.artist = b.artist COLLATE NOCASE AND d.title = b.title COLLATE NOCASE
-    WHERE b.artist IS NULL
-""")
-
-after_duuzu = conn.execute("SELECT COUNT(*) FROM combined").fetchone()[0]
-print(f"After duuzu merge: {after_duuzu} (+{after_duuzu - bpm_count} duuzu-only)")
-
-# Step 3: Add key-only tracks (not in BPM db or duuzu)
-conn.execute("""
-    INSERT INTO combined (artist, title, key_name)
-    SELECT k.artist, k.title, k.key_name
-    FROM (
-        SELECT artist, title, key_name
-        FROM kdb.tracks
-        GROUP BY artist COLLATE NOCASE, title COLLATE NOCASE
-    ) k
-    LEFT JOIN combined c ON k.artist = c.artist COLLATE NOCASE AND k.title = c.title COLLATE NOCASE
-    WHERE c.artist IS NULL
+        -- Pick the longest artist string as canonical
+        MAX(artist) as artist,
+        MAX(title) as title,
+        -- BPM: prefer waterloo, then duuzu, then kaggle, then musicoset
+        COALESCE(
+            MAX(CASE WHEN source = 'waterloo' THEN bpm END),
+            MAX(CASE WHEN source = 'duuzu' THEN bpm END),
+            MAX(CASE WHEN source = 'kaggle' THEN bpm END),
+            MAX(CASE WHEN source = 'musicoset' THEN bpm END)
+        ) as bpm,
+        -- Key: prefer duuzu (has minor), then songkeyfinder, then kaggle, then musicoset
+        COALESCE(
+            MAX(CASE WHEN source = 'duuzu' THEN key_name END),
+            MAX(CASE WHEN source = 'songkeyfinder' THEN key_name END),
+            MAX(CASE WHEN source = 'kaggle' THEN key_name END),
+            MAX(CASE WHEN source = 'musicoset' THEN key_name END)
+        ) as key_name,
+        MAX(duration) as duration,
+        MAX(year) as year,
+        MAX(genre) as genre
+    FROM stage
+    GROUP BY LOWER(TRIM(artist)), LOWER(TRIM(title))
 """)
 
 total = conn.execute("SELECT COUNT(*) FROM combined").fetchone()[0]
-print(f"After key-only merge: {total}")
-
-# Stats
 with_both = conn.execute("SELECT COUNT(*) FROM combined WHERE bpm IS NOT NULL AND key_name IS NOT NULL").fetchone()[0]
 bpm_only = conn.execute("SELECT COUNT(*) FROM combined WHERE bpm IS NOT NULL AND key_name IS NULL").fetchone()[0]
 key_only = conn.execute("SELECT COUNT(*) FROM combined WHERE bpm IS NULL AND key_name IS NOT NULL").fetchone()[0]
 
-print(f"\nFinal combined DB: {total} tracks")
+print(f"\nFinal combined DB: {total} unique tracks")
 print(f"  BPM + Key: {with_both}")
 print(f"  BPM only:  {bpm_only}")
 print(f"  Key only:  {key_only}")
 
 # Write to disk
+print("\nWriting combined.db...")
 disk = sqlite3.connect("combined.db")
-conn.execute("CREATE INDEX idx_bpm ON combined(bpm)")
-conn.execute("CREATE INDEX idx_key ON combined(key_name)")
-conn.execute("CREATE INDEX idx_artist ON combined(artist COLLATE NOCASE)")
-
-# Dump to disk db
+disk.execute("DROP TABLE IF EXISTS tracks")
 disk.execute("""
-    CREATE TABLE IF NOT EXISTS tracks (
+    CREATE TABLE tracks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         artist TEXT, title TEXT, bpm REAL, duration TEXT,
         year INTEGER, genre TEXT, key_name TEXT
     )
 """)
-disk.execute("DELETE FROM tracks")
 rows = conn.execute("SELECT artist, title, bpm, duration, year, genre, key_name FROM combined").fetchall()
 disk.executemany(
     "INSERT INTO tracks (artist, title, bpm, duration, year, genre, key_name) VALUES (?, ?, ?, ?, ?, ?, ?)",
     rows
 )
-disk.execute("CREATE INDEX IF NOT EXISTS idx_bpm ON tracks(bpm)")
-disk.execute("CREATE INDEX IF NOT EXISTS idx_key ON tracks(key_name)")
-disk.execute("CREATE INDEX IF NOT EXISTS idx_artist ON tracks(artist COLLATE NOCASE)")
+disk.execute("CREATE INDEX idx_bpm ON tracks(bpm)")
+disk.execute("CREATE INDEX idx_key ON tracks(key_name)")
+disk.execute("CREATE INDEX idx_artist ON tracks(artist COLLATE NOCASE)")
 disk.commit()
 disk.close()
 
 # Export JSON
+print("Writing tracks.json...")
 data = []
 for r in rows:
     data.append({
@@ -142,5 +155,10 @@ with open("tracks.json", "w") as f:
 
 mb = round(len(json.dumps(data)) / 1024 / 1024, 1)
 print(f"\nExported {len(data)} tracks to tracks.json ({mb} MB)")
+
+# Key distribution
+print("\nTop keys:")
+for row in conn.execute("SELECT key_name, COUNT(*) as cnt FROM combined WHERE key_name IS NOT NULL GROUP BY key_name ORDER BY cnt DESC LIMIT 15").fetchall():
+    print(f"  {row[0]}: {row[1]}")
 
 conn.close()
