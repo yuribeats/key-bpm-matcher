@@ -265,16 +265,6 @@ input[type="text"]:focus { border-color: #228B22; }
     </div>
 
     <div class="control-group">
-      <label>DATA</label>
-      <div class="key-selector">
-        <div class="key-btn active" data-filter="all" id="filterAll">ALL</div>
-        <div class="key-btn" data-filter="both" id="filterBoth">BPM + KEY</div>
-        <div class="key-btn" data-filter="bpm" id="filterBpm">BPM ONLY</div>
-        <div class="key-btn" data-filter="key" id="filterKey">KEY ONLY</div>
-      </div>
-    </div>
-
-    <div class="control-group">
       <label>&nbsp;</label>
       <div class="search-btn" id="searchBtn">SEARCH</div>
     </div>
@@ -282,18 +272,11 @@ input[type="text"]:focus { border-color: #228B22; }
 
   <div class="filter-pills" id="filterPills"></div>
 
-  <div class="legend">
-    <div class="legend-item"><span class="source-dot source-both"></span> BPM + KEY</div>
-    <div class="legend-item"><span class="source-dot source-bpm"></span> BPM ONLY</div>
-    <div class="legend-item"><span class="source-dot source-key"></span> KEY ONLY</div>
-  </div>
-
   <div class="stats" id="stats"></div>
 
   <table class="results-table">
     <thead>
       <tr>
-        <th></th>
         <th></th>
         <th class="sortable" data-sort="artist">ARTIST <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
@@ -379,14 +362,6 @@ function init() {
     minSel.appendChild(btn);
   });
 
-  ['filterAll','filterBoth','filterBpm','filterKey'].forEach(id => {
-    document.getElementById(id).addEventListener('click', e => {
-      document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      dataFilter = e.target.dataset.filter;
-    });
-  });
-
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
       if (!hasSearched) return;
@@ -456,11 +431,17 @@ async function fetchTracks() {
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
-  if (dataFilter !== 'all') params.set('filter', dataFilter);
   params.set('sort', sortCol);
   params.set('dir', sortDir);
   params.set('page', page);
   params.set('limit', PER_PAGE);
+
+  if (!q && selectedKeys.size === 0 && !bpmMin && !bpmMax) {
+    document.getElementById('stats').innerHTML = 'ENTER A SEARCH TERM, SELECT A KEY, OR SET A BPM RANGE';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('pagination').innerHTML = '';
+    return;
+  }
 
   document.getElementById('stats').innerHTML = 'SEARCHING...';
 
@@ -468,7 +449,7 @@ async function fetchTracks() {
     const resp = await fetch('/api/search?' + params.toString());
     const data = await resp.json();
     if (data.error) {
-      document.getElementById('stats').innerHTML = '<span style="color:red">SEARCH FAILED</span>';
+      document.getElementById('stats').innerHTML = data.error;
       return;
     }
     totalResults = data.total;
@@ -493,9 +474,6 @@ function renderFavorites() {
   if (selectedKeys.size > 0) tracks = tracks.filter(t => t.key && selectedKeys.has(t.key));
   if (bpmMin > 0) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) >= bpmMin);
   if (bpmMax < 999) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) <= bpmMax);
-  if (dataFilter === 'both') tracks = tracks.filter(t => t.bpm && t.key);
-  else if (dataFilter === 'bpm') tracks = tracks.filter(t => t.bpm);
-  else if (dataFilter === 'key') tracks = tracks.filter(t => t.key);
 
   tracks.sort((a, b) => {
     let va = a[sortCol === 'key' ? 'key' : sortCol], vb = b[sortCol === 'key' ? 'key' : sortCol];
@@ -513,18 +491,15 @@ function renderFavorites() {
 
 function render(tracks) {
   const stats = document.getElementById('stats');
-  stats.innerHTML = `<span>${totalResults.toLocaleString()}</span> TRACKS`;
+  const countStr = totalResults === 'many' ? '100+' : typeof totalResults === 'number' ? totalResults.toLocaleString() : totalResults;
+  stats.innerHTML = `<span>${countStr}</span> TRACKS`;
 
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
-    const hasBpm = t.bpm != null;
-    const hasKey = t.key != null;
-    const sourceClass = hasBpm && hasKey ? 'source-both' : hasBpm ? 'source-bpm' : 'source-key';
-    const bpmStr = hasBpm ? Math.round(parseFloat(t.bpm)).toString() : '<span class="no-data">-</span>';
-    const keyStr = hasKey ? esc(t.key) : '<span class="no-data">-</span>';
+    const bpmStr = t.bpm != null ? Math.round(parseFloat(t.bpm)).toString() : '-';
+    const keyStr = t.key ? esc(t.key) : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
-      <td><span class="source-dot ${sourceClass}"></span></td>
       <td><span class="fav-star${favClass}" data-artist="${esc(t.artist)}" data-title="${esc(t.title)}" data-bpm="${t.bpm || ''}" data-key="${t.key || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
       <td class="artist-link" data-artist="${esc(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
@@ -556,9 +531,10 @@ function render(tracks) {
 }
 
 function renderPagination() {
-  const totalPages = Math.ceil(totalResults / PER_PAGE);
   const pag = document.getElementById('pagination');
-  if (totalPages <= 1) { pag.innerHTML = ''; return; }
+  const knownTotal = typeof totalResults === 'number' ? totalResults : 10000;
+  const totalPages = Math.ceil(knownTotal / PER_PAGE);
+  if (totalPages <= 1 && totalResults !== 'many') { pag.innerHTML = ''; return; }
 
   let html = '';
   const prevClass = page === 0 ? ' disabled' : '';

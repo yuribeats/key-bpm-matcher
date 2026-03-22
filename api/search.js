@@ -14,7 +14,6 @@ module.exports = async function handler(req, res) {
     key = "",
     bpmMin = "",
     bpmMax = "",
-    filter = "all",
     sort = "artist",
     dir = "asc",
     page = "0",
@@ -37,23 +36,19 @@ module.exports = async function handler(req, res) {
   }
 
   if (bpmMin) {
-    conditions.push("ROUND(bpm) >= ?");
-    params.push(Math.round(parseFloat(bpmMin)));
+    conditions.push("bpm >= ?");
+    params.push(parseFloat(bpmMin) - 0.5);
   }
   if (bpmMax) {
-    conditions.push("ROUND(bpm) <= ?");
-    params.push(Math.round(parseFloat(bpmMax)));
+    conditions.push("bpm < ?");
+    params.push(parseFloat(bpmMax) + 0.5);
   }
 
-  if (filter === "both") {
-    conditions.push("bpm IS NOT NULL AND key_name IS NOT NULL");
-  } else if (filter === "bpm") {
-    conditions.push("bpm IS NOT NULL");
-  } else if (filter === "key") {
-    conditions.push("key_name IS NOT NULL");
+  if (conditions.length === 0) {
+    return res.status(400).json({ error: "Please provide at least one filter (search text, key, or BPM range)" });
   }
 
-  const where = conditions.length > 0 ? "WHERE " + conditions.join(" AND ") : "";
+  const where = "WHERE " + conditions.join(" AND ");
 
   const allowedSorts = { artist: "artist", title: "title", bpm: "bpm", key: "key_name" };
   const sortCol = allowedSorts[sort] || "artist";
@@ -62,7 +57,6 @@ module.exports = async function handler(req, res) {
   const lim = Math.min(parseInt(limit), 200);
 
   try {
-    // Fetch limit+1 to know if there are more results
     const dataResult = await client.execute({
       sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
       args: [...params, lim + 1, offset],
@@ -78,31 +72,7 @@ module.exports = async function handler(req, res) {
       key: r.key_name,
     }));
 
-    // Estimate total: if on first page and we got fewer than limit, exact count is known
-    // Otherwise, indicate there are more
-    let total;
-    if (!hasMore && offset === 0) {
-      total = tracks.length;
-    } else if (!hasMore) {
-      total = offset + tracks.length;
-    } else {
-      // Only run count if we have filters (smaller result set)
-      if (conditions.length > 0) {
-        try {
-          const countResult = await client.execute({
-            sql: `SELECT COUNT(*) as total FROM tracks ${where}`,
-            args: params,
-          });
-          total = countResult.rows[0].total;
-        } catch {
-          total = offset + lim + 1;
-        }
-      } else {
-        total = 5722225; // known total
-      }
-    }
-
-    res.status(200).json({ total, tracks, page: parseInt(page), limit: lim, hasMore });
+    res.status(200).json({ total: hasMore ? "many" : offset + tracks.length, tracks, page: parseInt(page), limit: lim, hasMore });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database query failed" });
