@@ -242,6 +242,53 @@ input[type="text"]:focus { border-color: #228B22; }
 .source-key { background: #228B22; }
 .source-both { background: #fff; }
 
+.pm-btn {
+  background: #111;
+  border: 2px solid #228B22;
+  color: #228B22;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 8px 24px;
+  cursor: default;
+  user-select: none;
+  letter-spacing: 1px;
+}
+.pm-btn.active {
+  background: #228B22;
+  color: #000;
+}
+
+.pm-group {
+  margin-bottom: 20px;
+}
+.pm-group-header {
+  font-size: 12px;
+  font-weight: 700;
+  color: #228B22;
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+.pm-group-header .shift-label { color: #E89030; }
+.pm-group-header .arrow { color: #666; margin: 0 8px; }
+.pm-group-header .target-label { color: #fff; }
+
+.pm-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+.pm-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #111;
+  font-weight: 300;
+  font-size: 12px;
+}
+.pm-table tr:hover td { background: #0a0a0a; }
+.pm-empty { color: #333; font-size: 11px; font-weight: 300; padding: 8px 0; }
+
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -309,6 +356,17 @@ input[type="text"]:focus { border-color: #228B22; }
   </table>
 
   <div class="pagination" id="pagination"></div>
+
+  <div id="pitchMatchSection" style="display:none;margin-top:32px;border-top:1px solid #222;padding-top:20px">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+      <div class="pm-btn" id="pmBtn">PITCH MATCH</div>
+      <div class="control-group" id="pmRangeGroup" style="display:none">
+        <label>SEMITONE RANGE: <span id="pmRangeVal">3</span></label>
+        <input type="range" id="pmRange" min="1" max="6" value="3" style="width:120px;accent-color:#228B22">
+      </div>
+    </div>
+    <div id="pmResults"></div>
+  </div>
 
   <div class="empty-state" id="emptyState">SET YOUR CRITERIA AND CLICK SEARCH</div>
 </div>
@@ -512,6 +570,7 @@ async function fetchTracks() {
     hasMoreResults = data.hasMore;
     currentTracks = data.tracks;
     render(data.tracks);
+    updatePitchMatchVisibility();
 
     if (hasMoreResults) prefetchPage(page + 1);
     if (page > 0) prefetchPage(page - 1);
@@ -664,7 +723,144 @@ function escAttr(s) {
   return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
+let pmOpen = false;
+
+function canPitchMatch() {
+  const bpmMin = document.getElementById('bpmMin').value.trim();
+  const bpmMax = document.getElementById('bpmMax').value.trim();
+  return selectedKeys.size === 1 && (bpmMin || bpmMax);
+}
+
+function updatePitchMatchVisibility() {
+  const section = document.getElementById('pitchMatchSection');
+  if (hasSearched && canPitchMatch() && !showingFavorites) {
+    section.style.display = '';
+  } else {
+    section.style.display = 'none';
+    pmOpen = false;
+    document.getElementById('pmBtn').classList.remove('active');
+    document.getElementById('pmRangeGroup').style.display = 'none';
+    document.getElementById('pmResults').innerHTML = '';
+  }
+}
+
+async function fetchPitchMatch() {
+  if (!canPitchMatch()) return;
+  const key = Array.from(selectedKeys)[0];
+  const bpmMin = document.getElementById('bpmMin').value.trim();
+  const bpmMax = document.getElementById('bpmMax').value.trim();
+  const range = document.getElementById('pmRange').value;
+  const q = document.getElementById('search').value.trim();
+
+  const params = new URLSearchParams();
+  params.set('key', key);
+  if (bpmMin) params.set('bpmMin', bpmMin);
+  if (bpmMax) params.set('bpmMax', bpmMax);
+  params.set('range', range);
+  params.set('limit', '10');
+  if (hqOnly) params.set('hq', '1');
+  if (q) params.set('q', q);
+
+  document.getElementById('pmResults').innerHTML = '<div style="color:#666;font-size:11px;font-weight:300">SEARCHING PITCH MATCHES...</div>';
+
+  try {
+    const resp = await fetch('/api/pitch-match?' + params.toString());
+    const data = await resp.json();
+    renderPitchMatch(data.results, key, bpmMin || bpmMax);
+  } catch {
+    document.getElementById('pmResults').innerHTML = '<div style="color:red;font-size:11px">PITCH MATCH FAILED</div>';
+  }
+}
+
+function renderPitchMatch(results, targetKey, targetBpm) {
+  const container = document.getElementById('pmResults');
+  if (!results || results.length === 0) {
+    container.innerHTML = '<div class="pm-empty">NO PITCH MATCHES FOUND</div>';
+    return;
+  }
+
+  let html = '';
+  const sorted = results.slice().sort((a, b) => Math.abs(a.shift) - Math.abs(b.shift));
+
+  for (const group of sorted) {
+    const dir = group.shift > 0 ? '+' : '';
+    const bpmRange = group.sourceBpmMin === group.sourceBpmMax
+      ? group.sourceBpmMin.toFixed(1)
+      : group.sourceBpmMin.toFixed(1) + '-' + group.sourceBpmMax.toFixed(1);
+
+    html += '<div class="pm-group">';
+    html += `<div class="pm-group-header">
+      <span class="shift-label">${dir}${group.shift} SEMITONE${Math.abs(group.shift) > 1 ? 'S' : ''}</span>
+      <span class="arrow">&mdash;</span>
+      ${esc(group.sourceKey)} @ ${bpmRange} BPM
+      <span class="arrow">&rarr;</span>
+      <span class="target-label">${esc(targetKey)} @ ${parseFloat(targetBpm).toFixed(1)} BPM</span>
+      <span style="color:#666;font-size:10px;margin-left:8px">(${group.tracks.length} TRACK${group.tracks.length !== 1 ? 'S' : ''})</span>
+    </div>`;
+
+    if (group.tracks.length === 0) {
+      html += '<div class="pm-empty">NO TRACKS IN THIS RANGE</div>';
+    } else {
+      html += '<table class="pm-table"><tbody>';
+      for (const t of group.tracks) {
+        const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
+        html += `<tr>
+          <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}">${favClass ? '\u2605' : '\u2606'}</span></td>
+          <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
+          <td>${esc(t.title)}</td>
+          <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-'}</td>
+          <td class="key-cell">${t.key ? esc(t.key) : '-'}</td>
+        </tr>`;
+      }
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.fav-star').forEach(el => {
+    el.addEventListener('click', () => {
+      toggleFavorite({
+        artist: el.dataset.artist,
+        title: el.dataset.title,
+        bpm: el.dataset.bpm ? parseFloat(el.dataset.bpm) : null,
+        key: el.dataset.key || null
+      });
+    });
+  });
+
+  container.querySelectorAll('.artist-link').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById('search').value = el.dataset.artist;
+      selectedKeys.clear();
+      document.querySelectorAll('.key-btn.active').forEach(b => b.classList.remove('active'));
+      document.getElementById('bpmMin').value = '';
+      document.getElementById('bpmMax').value = '';
+      updatePills();
+      page = 0;
+      hasSearched = true;
+      prefetchCache = {};
+      document.getElementById('emptyState').style.display = 'none';
+      fetchTracks();
+    });
+  });
+}
+
 init();
+
+document.getElementById('pmBtn').addEventListener('click', () => {
+  pmOpen = !pmOpen;
+  document.getElementById('pmBtn').classList.toggle('active', pmOpen);
+  document.getElementById('pmRangeGroup').style.display = pmOpen ? '' : 'none';
+  if (pmOpen) fetchPitchMatch();
+  else document.getElementById('pmResults').innerHTML = '';
+});
+
+document.getElementById('pmRange').addEventListener('input', e => {
+  document.getElementById('pmRangeVal').textContent = e.target.value;
+  if (pmOpen) fetchPitchMatch();
+});
 </script>
 </body>
 </html>
