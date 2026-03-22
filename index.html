@@ -728,7 +728,7 @@ let pmOpen = false;
 function canPitchMatch() {
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
-  return selectedKeys.size === 1 && (bpmMin || bpmMax);
+  return selectedKeys.size >= 1 && selectedKeys.size <= 2 && (bpmMin || bpmMax);
 }
 
 function updatePitchMatchVisibility() {
@@ -746,27 +746,32 @@ function updatePitchMatchVisibility() {
 
 async function fetchPitchMatch() {
   if (!canPitchMatch()) return;
-  const key = Array.from(selectedKeys)[0];
+  const keys = Array.from(selectedKeys);
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const range = document.getElementById('pmRange').value;
   const q = document.getElementById('search').value.trim();
 
-  const params = new URLSearchParams();
-  params.set('key', key);
-  if (bpmMin) params.set('bpmMin', bpmMin);
-  if (bpmMax) params.set('bpmMax', bpmMax);
-  params.set('range', range);
-  params.set('limit', '10');
-  if (hqOnly) params.set('hq', '1');
-  if (q) params.set('q', q);
-
   document.getElementById('pmResults').innerHTML = '<div style="color:#666;font-size:11px;font-weight:300">SEARCHING PITCH MATCHES...</div>';
 
   try {
-    const resp = await fetch('/api/pitch-match?' + params.toString());
-    const data = await resp.json();
-    renderPitchMatch(data.results, key, bpmMin || bpmMax);
+    const fetches = keys.map(key => {
+      const params = new URLSearchParams();
+      params.set('key', key);
+      if (bpmMin) params.set('bpmMin', bpmMin);
+      if (bpmMax) params.set('bpmMax', bpmMax);
+      params.set('range', range);
+      params.set('limit', '10');
+      if (hqOnly) params.set('hq', '1');
+      if (q) params.set('q', q);
+      return fetch('/api/pitch-match?' + params.toString()).then(r => r.json());
+    });
+    const responses = await Promise.all(fetches);
+    let allResults = [];
+    responses.forEach((data, i) => {
+      if (data.results) allResults = allResults.concat(data.results);
+    });
+    renderPitchMatch(allResults, keys.join(' + '), bpmMin || bpmMax);
   } catch {
     document.getElementById('pmResults').innerHTML = '<div style="color:red;font-size:11px">PITCH MATCH FAILED</div>';
   }
