@@ -136,6 +136,7 @@ input[type="text"]:focus { border-color: #228B22; }
 .key-cell { color: #228B22; font-weight: 700; }
 .bpm-cell { font-variant-numeric: tabular-nums; }
 .no-data { color: #333; }
+.artist-link { color: #228B22; }
 
 .pagination {
   display: flex;
@@ -477,7 +478,7 @@ function render() {
     const genreStr = t.genre || '<span class="no-data">-</span>';
     return `<tr>
       <td><span class="source-dot ${sourceClass}"></span></td>
-      <td>${esc(t.artist)}</td>
+      <td class="artist-link" data-artist="${esc(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
       <td class="bpm-cell">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
@@ -487,6 +488,14 @@ function render() {
   }).join('');
 
   renderPagination();
+
+  tbody.querySelectorAll('.artist-link').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.dataset.artist;
+      document.getElementById('search').value = name;
+      applyFilters();
+    });
+  });
 }
 
 function renderPagination() {
