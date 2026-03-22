@@ -101,6 +101,20 @@ input[type="text"]:focus { border-color: #228B22; }
 }
 .bpm-control input[type="text"] { width: 60px; text-align: center; }
 
+.search-btn {
+  background: #228B22;
+  border: 1px solid #228B22;
+  color: #000;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 8px 24px;
+  cursor: default;
+  user-select: none;
+  letter-spacing: 1px;
+}
+
 .stats {
   font-size: 11px;
   font-weight: 300;
@@ -210,11 +224,12 @@ input[type="text"]:focus { border-color: #228B22; }
 .source-key { background: #228B22; }
 .source-both { background: #fff; }
 
-.loading {
+.empty-state {
   text-align: center;
-  padding: 40px;
-  color: #666;
+  padding: 60px 20px;
+  color: #444;
   font-weight: 300;
+  font-size: 14px;
 }
 </style>
 </head>
@@ -258,6 +273,11 @@ input[type="text"]:focus { border-color: #228B22; }
         <div class="key-btn" data-filter="key" id="filterKey">KEY ONLY</div>
       </div>
     </div>
+
+    <div class="control-group">
+      <label>&nbsp;</label>
+      <div class="search-btn" id="searchBtn">SEARCH</div>
+    </div>
   </div>
 
   <div class="filter-pills" id="filterPills"></div>
@@ -285,9 +305,9 @@ input[type="text"]:focus { border-color: #228B22; }
   </table>
 
   <div class="pagination" id="pagination"></div>
-</div>
 
-<div class="loading" id="loading" style="display:none"></div>
+  <div class="empty-state" id="emptyState">SET YOUR CRITERIA AND CLICK SEARCH</div>
+</div>
 
 <script>
 const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
@@ -301,6 +321,7 @@ let selectedKeys = new Set();
 let dataFilter = 'all';
 let showingFavorites = false;
 let currentTracks = [];
+let hasSearched = false;
 
 function getFavorites() {
   try {
@@ -363,13 +384,12 @@ function init() {
       document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
       e.target.classList.add('active');
       dataFilter = e.target.dataset.filter;
-      page = 0;
-      fetchTracks();
     });
   });
 
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
+      if (!hasSearched) return;
       const col = th.dataset.sort;
       if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortCol = col; sortDir = 'asc'; }
@@ -380,31 +400,37 @@ function init() {
     });
   });
 
-  let searchTimeout;
-  document.getElementById('search').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    page = 0;
+    hasSearched = true;
+    document.getElementById('emptyState').style.display = 'none';
+    fetchTracks();
   });
-  document.getElementById('bpmMin').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
-  });
-  document.getElementById('bpmMax').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => { page = 0; fetchTracks(); }, 300);
+
+  document.getElementById('search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      page = 0;
+      hasSearched = true;
+      document.getElementById('emptyState').style.display = 'none';
+      fetchTracks();
+    }
   });
 
   document.getElementById('favToggle').addEventListener('click', () => {
     showingFavorites = !showingFavorites;
     document.getElementById('favToggle').classList.toggle('active', showingFavorites);
     if (showingFavorites) {
+      document.getElementById('emptyState').style.display = 'none';
       renderFavorites();
-    } else {
+    } else if (hasSearched) {
       fetchTracks();
+    } else {
+      document.getElementById('emptyState').style.display = '';
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('stats').innerHTML = '';
+      document.getElementById('pagination').innerHTML = '';
     }
   });
-
-  fetchTracks();
 }
 
 function toggleKey(k, btn) {
@@ -415,9 +441,7 @@ function toggleKey(k, btn) {
     selectedKeys.add(k);
     btn.classList.add('active');
   }
-  page = 0;
   updatePills();
-  fetchTracks();
 }
 
 async function fetchTracks() {
@@ -438,14 +462,20 @@ async function fetchTracks() {
   params.set('page', page);
   params.set('limit', PER_PAGE);
 
+  document.getElementById('stats').innerHTML = 'SEARCHING...';
+
   try {
     const resp = await fetch('/api/search?' + params.toString());
     const data = await resp.json();
+    if (data.error) {
+      document.getElementById('stats').innerHTML = '<span style="color:red">SEARCH FAILED</span>';
+      return;
+    }
     totalResults = data.total;
     currentTracks = data.tracks;
     render(data.tracks);
   } catch (err) {
-    document.getElementById('stats').innerHTML = '<span style="color:red">ERROR LOADING DATA</span>';
+    document.getElementById('stats').innerHTML = '<span style="color:red">SEARCH FAILED</span>';
   }
 }
 
@@ -461,8 +491,8 @@ function renderFavorites() {
 
   if (q) tracks = tracks.filter(t => t.artist.toLowerCase().includes(q) || t.title.toLowerCase().includes(q));
   if (selectedKeys.size > 0) tracks = tracks.filter(t => t.key && selectedKeys.has(t.key));
-  if (bpmMin > 0) tracks = tracks.filter(t => t.bpm && t.bpm >= bpmMin);
-  if (bpmMax < 999) tracks = tracks.filter(t => t.bpm && t.bpm <= bpmMax);
+  if (bpmMin > 0) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) >= bpmMin);
+  if (bpmMax < 999) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) <= bpmMax);
   if (dataFilter === 'both') tracks = tracks.filter(t => t.bpm && t.key);
   else if (dataFilter === 'bpm') tracks = tracks.filter(t => t.bpm);
   else if (dataFilter === 'key') tracks = tracks.filter(t => t.key);
@@ -518,8 +548,7 @@ function render(tracks) {
     el.addEventListener('click', () => {
       document.getElementById('search').value = el.dataset.artist;
       page = 0;
-      if (showingFavorites) renderFavorites();
-      else fetchTracks();
+      fetchTracks();
     });
   });
 
@@ -573,9 +602,7 @@ function updatePills() {
       selectedKeys.delete(k);
       const btn = document.querySelector('.key-btn[data-key="' + k + '"]');
       if (btn) btn.classList.remove('active');
-      page = 0;
       updatePills();
-      fetchTracks();
     });
     pills.appendChild(pill);
   });
