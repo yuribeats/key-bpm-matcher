@@ -1,11 +1,11 @@
-import { createClient } from "@libsql/client";
+const { createClient } = require("@libsql/client");
 
 const client = createClient({
   url: process.env.TURSO_URL,
   authToken: process.env.TURSO_AUTH_TOKEN,
 });
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.method === "OPTIONS") return res.status(200).end();
 
@@ -84,4 +84,4 @@ export default async function handler(req, res) {
     console.error(err);
     res.status(500).json({ error: "Database query failed" });
   }
-}
+};
