@@ -241,11 +241,6 @@ input[type="text"]:focus { border-color: #228B22; }
     </div>
 
     <div class="control-group">
-      <label>GENRE</label>
-      <input type="text" id="genreSearch" placeholder="FILTER GENRE">
-    </div>
-
-    <div class="control-group">
       <label>DATA</label>
       <div class="key-selector">
         <div class="key-btn active" data-filter="all" id="filterAll">ALL</div>
@@ -274,8 +269,6 @@ input[type="text"]:focus { border-color: #228B22; }
         <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="key">KEY <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="year">YEAR <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="genre">GENRE <span class="sort-arrow"></span></th>
       </tr>
     </thead>
     <tbody id="results"></tbody>
@@ -362,10 +355,6 @@ function init() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(applyFilters, 200);
   });
-  document.getElementById('genreSearch').addEventListener('input', () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(applyFilters, 200);
-  });
   document.getElementById('bpmMin').addEventListener('input', () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(applyFilters, 200);
@@ -410,13 +399,11 @@ function toggleKey(k, btn) {
 
 function applyFilters() {
   const q = document.getElementById('search').value.toLowerCase().trim();
-  const gq = document.getElementById('genreSearch').value.toLowerCase().trim();
   const bpmMinVal = parseFloat(document.getElementById('bpmMin').value) || 0;
   const bpmMaxVal = parseFloat(document.getElementById('bpmMax').value) || 999;
 
   filtered = allTracks.filter(t => {
     if (q && !t.artist.toLowerCase().includes(q) && !t.title.toLowerCase().includes(q)) return false;
-    if (gq && !t.genre.toLowerCase().includes(gq)) return false;
     if (selectedKeys.size > 0 && (!t.key || !selectedKeys.has(t.key))) return false;
     if (bpmMinVal > 0 && (!t.bpm || t.bpm < bpmMinVal)) return false;
     if (bpmMaxVal < 999 && (!t.bpm || t.bpm > bpmMaxVal)) return false;
@@ -474,16 +461,12 @@ function render() {
     const sourceClass = t.hasBpm && t.hasKey ? 'source-both' : t.hasBpm ? 'source-bpm' : 'source-key';
     const bpmStr = t.bpm != null ? t.bpm.toFixed(1) : '<span class="no-data">-</span>';
     const keyStr = t.key ? esc(t.key) : '<span class="no-data">-</span>';
-    const yearStr = t.year || '<span class="no-data">-</span>';
-    const genreStr = t.genre || '<span class="no-data">-</span>';
     return `<tr>
       <td><span class="source-dot ${sourceClass}"></span></td>
       <td class="artist-link" data-artist="${esc(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
       <td class="bpm-cell">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
-      <td>${yearStr}</td>
-      <td>${genreStr}</td>
     </tr>`;
   }).join('');
 
