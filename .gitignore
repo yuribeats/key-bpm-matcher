@@ -7,3 +7,4 @@ duuzu.db
 duuzu.json
 node_modules/
 .vercel
+.env
