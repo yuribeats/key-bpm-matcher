@@ -23,15 +23,16 @@ module.exports = async function handler(req, res) {
   const conditions = [];
   const params = [];
   let useFts = false;
+  let hasKeyFilter = false;
 
   if (q) {
-    // Try FTS5 first, fall back to LIKE
     useFts = true;
     conditions.push("id IN (SELECT rowid FROM tracks_fts WHERE tracks_fts MATCH ?)");
     params.push(`"${q.replace(/"/g, '""')}"`);
   }
 
   if (key) {
+    hasKeyFilter = true;
     const keys = key.split(",");
     const placeholders = keys.map(() => "?").join(",");
     conditions.push(`key_name IN (${placeholders})`);
@@ -53,21 +54,27 @@ module.exports = async function handler(req, res) {
 
   const where = "WHERE " + conditions.join(" AND ");
 
-  const allowedSorts = { artist: "artist", title: "title", bpm: "bpm", key: "key_name" };
-  const sortCol = allowedSorts[sort] || "artist";
+  const allowedSorts = { artist: "artist COLLATE NOCASE", title: "title COLLATE NOCASE", bpm: "bpm", key: "key_name" };
+  const sortCol = allowedSorts[sort] || "artist COLLATE NOCASE";
   const sortDir = dir === "desc" ? "DESC" : "ASC";
   const offset = parseInt(page) * parseInt(limit);
   const lim = Math.min(parseInt(limit), 200);
+
+  // Pick index hint to avoid temp sort on large result sets
+  let indexHint = "";
+  if (hasKeyFilter && !useFts) {
+    if (sort === "artist" || sort === undefined) indexHint = "INDEXED BY idx_key_artist_bpm";
+    else if (sort === "title") indexHint = "INDEXED BY idx_key_title_bpm";
+  }
 
   try {
     let dataResult;
     try {
       dataResult = await client.execute({
-        sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
+        sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${indexHint} ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
         args: [...params, lim + 1, offset],
       });
     } catch (ftsErr) {
-      // FTS table might not exist yet, fall back to LIKE
       if (useFts) {
         const likeConditions = conditions.slice();
         const likeParams = params.slice();
@@ -78,6 +85,12 @@ module.exports = async function handler(req, res) {
         dataResult = await client.execute({
           sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${likeWhere} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
           args: [...likeParams, lim + 1, offset],
+        });
+      } else if (indexHint) {
+        // Index hint failed, retry without it
+        dataResult = await client.execute({
+          sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
+          args: [...params, lim + 1, offset],
         });
       } else {
         throw ftsErr;

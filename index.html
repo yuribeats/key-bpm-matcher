@@ -305,6 +305,8 @@ let selectedKeys = new Set();
 let showingFavorites = false;
 let currentTracks = [];
 let hasSearched = false;
+let prefetchCache = {};
+let lastSearchParams = '';
 
 function getFavorites() {
   try {
@@ -419,13 +421,10 @@ function toggleKey(k, btn) {
   updatePills();
 }
 
-async function fetchTracks() {
-  if (showingFavorites) { renderFavorites(); return; }
-
+function buildParams(pageNum) {
   const q = document.getElementById('search').value.trim();
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
-
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
@@ -433,21 +432,49 @@ async function fetchTracks() {
   if (bpmMax) params.set('bpmMax', bpmMax);
   params.set('sort', sortCol);
   params.set('dir', sortDir);
-  params.set('page', page);
+  params.set('page', pageNum);
   params.set('limit', PER_PAGE);
+  return params;
+}
 
-  if (!q && selectedKeys.size === 0 && !bpmMin && !bpmMax) {
+function prefetchPage(pageNum) {
+  const params = buildParams(pageNum);
+  const key = params.toString();
+  if (prefetchCache[key]) return;
+  prefetchCache[key] = fetch('/api/search?' + key).then(r => r.json()).catch(() => null);
+}
+
+async function fetchTracks() {
+  if (showingFavorites) { renderFavorites(); return; }
+
+  const params = buildParams(page);
+  const baseKey = params.toString().replace(/&?page=\d+/, '');
+
+  if (!params.get('q') && !params.get('key') && !params.get('bpmMin') && !params.get('bpmMax')) {
     document.getElementById('stats').innerHTML = 'ENTER A SEARCH TERM, SELECT A KEY, OR SET A BPM RANGE';
     document.getElementById('results').innerHTML = '';
     document.getElementById('pagination').innerHTML = '';
     return;
   }
 
+  if (baseKey !== lastSearchParams) {
+    prefetchCache = {};
+    lastSearchParams = baseKey;
+  }
+
+  const cacheKey = params.toString();
   document.getElementById('stats').innerHTML = 'SEARCHING...';
 
   try {
-    const resp = await fetch('/api/search?' + params.toString());
-    const data = await resp.json();
+    let data;
+    if (prefetchCache[cacheKey]) {
+      data = await prefetchCache[cacheKey];
+      delete prefetchCache[cacheKey];
+    }
+    if (!data) {
+      const resp = await fetch('/api/search?' + cacheKey);
+      data = await resp.json();
+    }
     if (data.error) {
       document.getElementById('stats').innerHTML = data.error;
       return;
@@ -456,6 +483,9 @@ async function fetchTracks() {
     hasMoreResults = data.hasMore;
     currentTracks = data.tracks;
     render(data.tracks);
+
+    if (hasMoreResults) prefetchPage(page + 1);
+    if (page > 0) prefetchPage(page - 1);
   } catch (err) {
     document.getElementById('stats').innerHTML = '<span style="color:red">SEARCH FAILED</span>';
   }
@@ -501,8 +531,8 @@ function render(tracks) {
     const keyStr = t.key ? esc(t.key) : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
-      <td><span class="fav-star${favClass}" data-artist="${esc(t.artist)}" data-title="${esc(t.title)}" data-bpm="${t.bpm || ''}" data-key="${t.key || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
-      <td class="artist-link" data-artist="${esc(t.artist)}">${esc(t.artist)}</td>
+      <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}">${favClass ? '\u2605' : '\u2606'}</span></td>
+      <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
       <td class="bpm-cell">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
@@ -523,7 +553,15 @@ function render(tracks) {
   tbody.querySelectorAll('.artist-link').forEach(el => {
     el.addEventListener('click', () => {
       document.getElementById('search').value = el.dataset.artist;
+      selectedKeys.clear();
+      document.querySelectorAll('.key-btn.active').forEach(b => b.classList.remove('active'));
+      document.getElementById('bpmMin').value = '';
+      document.getElementById('bpmMax').value = '';
+      updatePills();
       page = 0;
+      hasSearched = true;
+      prefetchCache = {};
+      document.getElementById('emptyState').style.display = 'none';
       fetchTracks();
     });
   });
@@ -590,6 +628,11 @@ function esc(s) {
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+function escAttr(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 init();
