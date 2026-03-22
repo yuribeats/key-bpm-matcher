@@ -24,10 +24,10 @@ conn = sqlite3.connect(DB)
 conn.execute("PRAGMA journal_mode=WAL")
 conn.execute("PRAGMA synchronous=NORMAL")
 
-conn.execute("CREATE TABLE IF NOT EXISTS tonal (mbid TEXT PRIMARY KEY, key_key TEXT, key_scale TEXT)")
+conn.execute("CREATE TABLE IF NOT EXISTS tonal (mbid TEXT PRIMARY KEY, key_key TEXT, key_scale TEXT, key_strength REAL)")
 conn.execute("CREATE TABLE IF NOT EXISTS rhythm (mbid TEXT PRIMARY KEY, bpm REAL)")
 conn.execute("CREATE TABLE IF NOT EXISTS recordings (mbid TEXT PRIMARY KEY, artist TEXT, title TEXT)")
-conn.execute("CREATE TABLE IF NOT EXISTS tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, artist TEXT, title TEXT, bpm REAL, key_name TEXT)")
+conn.execute("CREATE TABLE IF NOT EXISTS tracks (id INTEGER PRIMARY KEY AUTOINCREMENT, artist TEXT, title TEXT, bpm REAL, key_name TEXT, key_strength REAL)")
 conn.commit()
 
 AB_BASE = "https://data.metabrainz.org/pub/musicbrainz/acousticbrainz/dumps/acousticbrainz-lowlevel-features-20220623"
@@ -69,17 +69,22 @@ if conn.execute("SELECT COUNT(*) FROM tonal").fetchone()[0] == 0:
             mbid = row.get("mbid", "").strip()
             key_key = row.get("key_key", "").strip()
             key_scale = row.get("key_scale", "").strip()
+            key_strength_str = row.get("key_strength", "").strip()
             if not mbid or not key_key:
                 continue
-            batch.append((mbid, key_key, key_scale))
+            try:
+                key_strength = float(key_strength_str) if key_strength_str else None
+            except ValueError:
+                key_strength = None
+            batch.append((mbid, key_key, key_scale, key_strength))
             if len(batch) >= 50000:
-                conn.executemany("INSERT OR IGNORE INTO tonal VALUES (?, ?, ?)", batch)
+                conn.executemany("INSERT OR IGNORE INTO tonal VALUES (?, ?, ?, ?)", batch)
                 conn.commit()
                 count += len(batch)
                 batch = []
                 print(f"  {count:,} tonal records...", end="\r")
     if batch:
-        conn.executemany("INSERT OR IGNORE INTO tonal VALUES (?, ?, ?)", batch)
+        conn.executemany("INSERT OR IGNORE INTO tonal VALUES (?, ?, ?, ?)", batch)
         conn.commit()
         count += len(batch)
     proc.wait()
@@ -211,7 +216,7 @@ print("=" * 60)
 
 conn.execute("DELETE FROM tracks")
 conn.execute("""
-    INSERT INTO tracks (artist, title, bpm, key_name)
+    INSERT INTO tracks (artist, title, bpm, key_name, key_strength)
     SELECT
         r.artist,
         r.title,
@@ -221,7 +226,8 @@ conn.execute("""
                 WHEN t.key_scale = 'major' THEN 'Major'
                 WHEN t.key_scale = 'minor' THEN 'Minor'
                 ELSE t.key_scale END
-            ELSE NULL END
+            ELSE NULL END,
+        t.key_strength
     FROM recordings r
     LEFT JOIN tonal t ON r.mbid = t.mbid
     LEFT JOIN rhythm rh ON r.mbid = rh.mbid

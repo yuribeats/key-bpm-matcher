@@ -28,6 +28,24 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
   margin-bottom: 20px;
 }
 
+.hq-toggle {
+  background: #111;
+  border: 2px solid #E89030;
+  color: #E89030;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: default;
+  user-select: none;
+}
+.hq-toggle.active {
+  background: #E89030;
+  border-color: #E89030;
+  color: #000;
+}
+
 .fav-toggle {
   background: #111;
   border: 2px solid #E89030;
@@ -237,7 +255,10 @@ input[type="text"]:focus { border-color: #228B22; }
 <div class="container">
   <div class="header-row">
     <h1>KEY + BPM MATCHER</h1>
-    <div class="fav-toggle" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="hq-toggle" id="hqToggle">HIGH CONFIDENCE</div>
+      <div class="fav-toggle" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
+    </div>
   </div>
 
   <div class="controls">
@@ -303,6 +324,7 @@ let totalResults = 0;
 let hasMoreResults = false;
 let selectedKeys = new Set();
 let showingFavorites = false;
+let hqOnly = false;
 let currentTracks = [];
 let hasSearched = false;
 let prefetchCache = {};
@@ -393,6 +415,12 @@ function init() {
     }
   });
 
+  document.getElementById('hqToggle').addEventListener('click', () => {
+    hqOnly = !hqOnly;
+    document.getElementById('hqToggle').classList.toggle('active', hqOnly);
+    if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
+  });
+
   document.getElementById('favToggle').addEventListener('click', () => {
     showingFavorites = !showingFavorites;
     document.getElementById('favToggle').classList.toggle('active', showingFavorites);
@@ -430,6 +458,7 @@ function buildParams(pageNum) {
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
+  if (hqOnly) params.set('hq', '1');
   params.set('sort', sortCol);
   params.set('dir', sortDir);
   params.set('page', pageNum);

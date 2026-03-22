@@ -14,6 +14,7 @@ module.exports = async function handler(req, res) {
     key = "",
     bpmMin = "",
     bpmMax = "",
+    hq = "",
     sort = "artist",
     dir = "asc",
     page = "0",
@@ -24,11 +25,17 @@ module.exports = async function handler(req, res) {
   const params = [];
   let useFts = false;
   let hasKeyFilter = false;
+  let hqFilter = false;
 
   if (q) {
     useFts = true;
     conditions.push("id IN (SELECT rowid FROM tracks_fts WHERE tracks_fts MATCH ?)");
     params.push(`"${q.replace(/"/g, '""')}"`);
+  }
+
+  if (hq === "1") {
+    hqFilter = true;
+    conditions.push("hq = 1");
   }
 
   if (key) {
@@ -63,8 +70,13 @@ module.exports = async function handler(req, res) {
   // Pick index hint to avoid temp sort on large result sets
   let indexHint = "";
   if (hasKeyFilter && !useFts) {
-    if (sort === "artist" || sort === undefined) indexHint = "INDEXED BY idx_key_artist_bpm";
-    else if (sort === "title") indexHint = "INDEXED BY idx_key_title_bpm";
+    if (hqFilter) {
+      if (sort === "artist" || sort === undefined) indexHint = "INDEXED BY idx_hq_key_artist_bpm";
+      else if (sort === "bpm") indexHint = "INDEXED BY idx_hq_key_bpm";
+    } else {
+      if (sort === "artist" || sort === undefined) indexHint = "INDEXED BY idx_key_artist_bpm";
+      else if (sort === "title") indexHint = "INDEXED BY idx_key_title_bpm";
+    }
   }
 
   try {
@@ -78,16 +90,16 @@ module.exports = async function handler(req, res) {
       if (useFts) {
         const likeConditions = conditions.slice();
         const likeParams = params.slice();
-        likeConditions[0] = "(artist LIKE ? COLLATE NOCASE OR title LIKE ? COLLATE NOCASE)";
-        likeParams[0] = `%${q}%`;
-        likeParams.splice(1, 0, `%${q}%`);
+        const ftsIdx = likeConditions.indexOf("id IN (SELECT rowid FROM tracks_fts WHERE tracks_fts MATCH ?)");
+        likeConditions[ftsIdx] = "(artist LIKE ? COLLATE NOCASE OR title LIKE ? COLLATE NOCASE)";
+        const paramIdx = ftsIdx > 0 ? ftsIdx : 0;
+        likeParams.splice(paramIdx, 1, `%${q}%`, `%${q}%`);
         const likeWhere = "WHERE " + likeConditions.join(" AND ");
         dataResult = await client.execute({
           sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${likeWhere} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
           args: [...likeParams, lim + 1, offset],
         });
       } else if (indexHint) {
-        // Index hint failed, retry without it
         dataResult = await client.execute({
           sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
           args: [...params, lim + 1, offset],
