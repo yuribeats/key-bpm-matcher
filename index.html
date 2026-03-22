@@ -300,8 +300,8 @@ let sortCol = 'artist';
 let sortDir = 'asc';
 let page = 0;
 let totalResults = 0;
+let hasMoreResults = false;
 let selectedKeys = new Set();
-let dataFilter = 'all';
 let showingFavorites = false;
 let currentTracks = [];
 let hasSearched = false;
@@ -452,7 +452,8 @@ async function fetchTracks() {
       document.getElementById('stats').innerHTML = data.error;
       return;
     }
-    totalResults = data.total;
+    totalResults = data.total === -1 ? -1 : data.total;
+    hasMoreResults = data.hasMore;
     currentTracks = data.tracks;
     render(data.tracks);
   } catch (err) {
@@ -491,12 +492,12 @@ function renderFavorites() {
 
 function render(tracks) {
   const stats = document.getElementById('stats');
-  const countStr = totalResults === 'many' ? '100+' : typeof totalResults === 'number' ? totalResults.toLocaleString() : totalResults;
+  const countStr = totalResults === -1 ? (page * PER_PAGE + tracks.length) + '+' : totalResults.toLocaleString();
   stats.innerHTML = `<span>${countStr}</span> TRACKS`;
 
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
-    const bpmStr = t.bpm != null ? Math.round(parseFloat(t.bpm)).toString() : '-';
+    const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-';
     const keyStr = t.key ? esc(t.key) : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
@@ -532,9 +533,9 @@ function render(tracks) {
 
 function renderPagination() {
   const pag = document.getElementById('pagination');
-  const knownTotal = typeof totalResults === 'number' ? totalResults : 10000;
-  const totalPages = Math.ceil(knownTotal / PER_PAGE);
-  if (totalPages <= 1 && totalResults !== 'many') { pag.innerHTML = ''; return; }
+  if (!hasMoreResults && page === 0 && currentTracks.length < PER_PAGE) { pag.innerHTML = ''; return; }
+  const totalPages = totalResults === -1 ? page + 2 : Math.ceil(totalResults / PER_PAGE);
+  if (totalPages <= 1) { pag.innerHTML = ''; return; }
 
   let html = '';
   const prevClass = page === 0 ? ' disabled' : '';

@@ -22,10 +22,13 @@ module.exports = async function handler(req, res) {
 
   const conditions = [];
   const params = [];
+  let useFts = false;
 
   if (q) {
-    conditions.push("(artist LIKE ? COLLATE NOCASE OR title LIKE ? COLLATE NOCASE)");
-    params.push(`%${q}%`, `%${q}%`);
+    // Try FTS5 first, fall back to LIKE
+    useFts = true;
+    conditions.push("id IN (SELECT rowid FROM tracks_fts WHERE tracks_fts MATCH ?)");
+    params.push(`"${q.replace(/"/g, '""')}"`);
   }
 
   if (key) {
@@ -45,7 +48,7 @@ module.exports = async function handler(req, res) {
   }
 
   if (conditions.length === 0) {
-    return res.status(400).json({ error: "Please provide at least one filter (search text, key, or BPM range)" });
+    return res.status(200).json({ total: 0, tracks: [], page: 0, limit: 100, hasMore: false });
   }
 
   const where = "WHERE " + conditions.join(" AND ");
@@ -57,10 +60,29 @@ module.exports = async function handler(req, res) {
   const lim = Math.min(parseInt(limit), 200);
 
   try {
-    const dataResult = await client.execute({
-      sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
-      args: [...params, lim + 1, offset],
-    });
+    let dataResult;
+    try {
+      dataResult = await client.execute({
+        sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${where} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
+        args: [...params, lim + 1, offset],
+      });
+    } catch (ftsErr) {
+      // FTS table might not exist yet, fall back to LIKE
+      if (useFts) {
+        const likeConditions = conditions.slice();
+        const likeParams = params.slice();
+        likeConditions[0] = "(artist LIKE ? COLLATE NOCASE OR title LIKE ? COLLATE NOCASE)";
+        likeParams[0] = `%${q}%`;
+        likeParams.splice(1, 0, `%${q}%`);
+        const likeWhere = "WHERE " + likeConditions.join(" AND ");
+        dataResult = await client.execute({
+          sql: `SELECT id, artist, title, bpm, key_name FROM tracks ${likeWhere} ORDER BY ${sortCol} ${sortDir} LIMIT ? OFFSET ?`,
+          args: [...likeParams, lim + 1, offset],
+        });
+      } else {
+        throw ftsErr;
+      }
+    }
 
     const hasMore = dataResult.rows.length > lim;
     const rows = dataResult.rows.slice(0, lim);
@@ -72,7 +94,7 @@ module.exports = async function handler(req, res) {
       key: r.key_name,
     }));
 
-    res.status(200).json({ total: hasMore ? "many" : offset + tracks.length, tracks, page: parseInt(page), limit: lim, hasMore });
+    res.status(200).json({ total: hasMore ? -1 : offset + tracks.length, tracks, page: parseInt(page), limit: lim, hasMore });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database query failed" });
