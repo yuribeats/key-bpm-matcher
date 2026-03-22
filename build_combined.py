@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import os
 
 conn = sqlite3.connect(":memory:")
 
@@ -9,6 +10,11 @@ conn.execute("ATTACH DATABASE 'keys.db' AS kdb")        # SongKeyFinder
 conn.execute("ATTACH DATABASE 'duuzu.db' AS ddb")       # duuzu
 conn.execute("ATTACH DATABASE 'kaggle.db' AS kagdb")    # Kaggle Spotify
 conn.execute("ATTACH DATABASE 'musicoset.db' AS mdb")   # MusicOSet
+
+HAS_AB = os.path.exists("acousticbrainz.db")
+if HAS_AB:
+    conn.execute("ATTACH DATABASE 'acousticbrainz.db' AS abdb")  # AcousticBrainz
+    print("AcousticBrainz db found, including it")
 
 # Create staging table - dump everything in, then dedupe
 conn.execute("""
@@ -64,9 +70,18 @@ conn.execute("""
 """)
 print(f"After MusicOSet: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
 
+# 6. AcousticBrainz (has key + bpm, if available)
+if HAS_AB:
+    conn.execute("""
+        INSERT INTO stage (artist, title, bpm, key_name, source)
+        SELECT artist, title, bpm, key_name, 'acousticbrainz'
+        FROM abdb.tracks
+    """)
+    print(f"After AcousticBrainz: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
+
 # Now dedupe: group by normalized artist+title, pick best data
-# Priority for key: duuzu > songkeyfinder > kaggle > musicoset
-# Priority for bpm: waterloo > duuzu > kaggle > musicoset
+# Priority for key: duuzu > songkeyfinder > kaggle > musicoset > acousticbrainz
+# Priority for bpm: waterloo > duuzu > kaggle > musicoset > acousticbrainz
 print("\nDeduplicating...")
 
 conn.execute("""
@@ -88,19 +103,21 @@ conn.execute("""
         -- Pick the longest artist string as canonical
         MAX(artist) as artist,
         MAX(title) as title,
-        -- BPM: prefer waterloo, then duuzu, then kaggle, then musicoset
+        -- BPM: prefer waterloo, then duuzu, then kaggle, then musicoset, then acousticbrainz
         COALESCE(
             MAX(CASE WHEN source = 'waterloo' THEN bpm END),
             MAX(CASE WHEN source = 'duuzu' THEN bpm END),
             MAX(CASE WHEN source = 'kaggle' THEN bpm END),
-            MAX(CASE WHEN source = 'musicoset' THEN bpm END)
+            MAX(CASE WHEN source = 'musicoset' THEN bpm END),
+            MAX(CASE WHEN source = 'acousticbrainz' THEN bpm END)
         ) as bpm,
-        -- Key: prefer duuzu (has minor), then songkeyfinder, then kaggle, then musicoset
+        -- Key: prefer duuzu (has minor), then songkeyfinder, then kaggle, then musicoset, then acousticbrainz
         COALESCE(
             MAX(CASE WHEN source = 'duuzu' THEN key_name END),
             MAX(CASE WHEN source = 'songkeyfinder' THEN key_name END),
             MAX(CASE WHEN source = 'kaggle' THEN key_name END),
-            MAX(CASE WHEN source = 'musicoset' THEN key_name END)
+            MAX(CASE WHEN source = 'musicoset' THEN key_name END),
+            MAX(CASE WHEN source = 'acousticbrainz' THEN key_name END)
         ) as key_name,
         MAX(duration) as duration,
         MAX(year) as year,
