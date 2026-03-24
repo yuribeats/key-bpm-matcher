@@ -628,7 +628,7 @@ function render(tracks) {
   const stats = document.getElementById('stats');
   const seen = new Set();
   tracks = tracks.filter(t => {
-    const k = (t.artist + '|||' + t.title + '|||' + (t.key || '')).toLowerCase();
+    const k = (t.artist + '|||' + t.title + '|||' + (t.key || '') + '|||' + (t.bpm != null ? t.bpm.toFixed(1) : '')).toLowerCase();
     if (seen.has(k)) return false;
     seen.add(k);
     return true;
