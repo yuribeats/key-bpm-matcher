@@ -1204,7 +1204,7 @@ function render(tracks) {
     const popStr = t.popularity != null ? t.popularity : '-';
     const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
     const instStr = t.instrumentalness != null ? parseFloat(t.instrumentalness).toFixed(2) : '-';
-    const tsStr = t.time_signature != null ? t.time_signature + '/4' : '-';
+    const tsStr = t.time_signature != null ? ([3,4,5].includes(t.time_signature) ? t.time_signature + '/4' : 'OTHER') : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
       <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
