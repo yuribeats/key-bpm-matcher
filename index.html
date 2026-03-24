@@ -5,17 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KEY + BPM MATCHER</title>
 <style>
+:root {
+  --bg: #000; --fg: #fff; --bg2: #111; --bg3: #0a0a0a;
+  --border: #333; --border2: #222; --border3: #111;
+  --muted: #666; --muted2: #888; --muted3: #444; --muted4: #333;
+  --green: #228B22; --accent: #E89030;
+  --pill-bg: #1a1a1a;
+}
+[data-theme="light"] {
+  --bg: #fff; --fg: #000; --bg2: #f0f0f0; --bg3: #f5f5f5;
+  --border: #ccc; --border2: #ddd; --border3: #eee;
+  --muted: #666; --muted2: #555; --muted3: #999; --muted4: #bbb;
+  --green: #228B22; --accent: #E89030;
+  --pill-bg: #e8e8e8;
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #000;
-  color: #fff;
+  background: var(--bg);
+  color: var(--fg);
   font-family: Arial, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 13px;
   line-height: 1.4;
 }
-a { color: #228B22; text-decoration: none; }
+a { color: var(--green); text-decoration: none; }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
@@ -29,8 +43,8 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
 }
 
 .toggle-btn {
-  background: #111;
-  border: 2px solid #333;
+  background: var(--bg2);
+  border: 2px solid var(--border);
   color: #fff;
   font-family: Arial, sans-serif;
   font-weight: 700;
@@ -41,8 +55,8 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
   user-select: none;
 }
 .toggle-btn.active {
-  background: #228B22;
-  border-color: #228B22;
+  background: var(--green);
+  border-color: var(--green);
   color: #000;
 }
 
@@ -55,11 +69,11 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
 }
 
 .control-group { display: flex; flex-direction: column; gap: 4px; }
-.control-group label { font-size: 10px; font-weight: 300; letter-spacing: 1px; color: #888; }
+.control-group label { font-size: 10px; font-weight: 300; letter-spacing: 1px; color: var(--muted2); }
 
 input[type="text"] {
-  background: #111;
-  border: 1px solid #333;
+  background: var(--bg2);
+  border: 1px solid var(--border);
   color: #fff;
   font-family: Arial, sans-serif;
   font-weight: 700;
@@ -69,7 +83,7 @@ input[type="text"] {
   outline: none;
   width: 200px;
 }
-input[type="text"]:focus { border-color: #228B22; }
+input[type="text"]:focus { border-color: var(--green); }
 
 .key-selector {
   display: flex;
@@ -77,8 +91,8 @@ input[type="text"]:focus { border-color: #228B22; }
   gap: 4px;
 }
 .key-btn {
-  background: #111;
-  border: 1px solid #333;
+  background: var(--bg2);
+  border: 1px solid var(--border);
   color: #fff;
   font-family: Arial, sans-serif;
   font-weight: 700;
@@ -89,8 +103,8 @@ input[type="text"]:focus { border-color: #228B22; }
   user-select: none;
 }
 .key-btn.active {
-  background: #228B22;
-  border-color: #228B22;
+  background: var(--green);
+  border-color: var(--green);
   color: #000;
 }
 
@@ -109,8 +123,8 @@ input[type="text"]:focus { border-color: #228B22; }
 .range-control input[type="text"] { width: 50px; text-align: center; }
 
 .search-btn {
-  background: #228B22;
-  border: 1px solid #228B22;
+  background: var(--green);
+  border: 1px solid var(--green);
   color: #000;
   font-family: Arial, sans-serif;
   font-weight: 700;
@@ -125,10 +139,10 @@ input[type="text"]:focus { border-color: #228B22; }
 .stats {
   font-size: 11px;
   font-weight: 300;
-  color: #666;
+  color: var(--muted);
   margin-bottom: 12px;
 }
-.stats span { color: #228B22; }
+.stats span { color: var(--green); }
 
 .results-table {
   width: 100%;
@@ -138,38 +152,38 @@ input[type="text"]:focus { border-color: #228B22; }
   text-align: left;
   font-size: 10px;
   font-weight: 300;
-  color: #666;
+  color: var(--muted);
   letter-spacing: 1px;
   padding: 8px 12px;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border2);
 }
 .results-table th.sortable { cursor: default; }
-.results-table th.sortable:hover { color: #228B22; }
+.results-table th.sortable:hover { color: var(--green); }
 .results-table th .sort-arrow { font-size: 8px; margin-left: 4px; }
 
 .results-table td {
   padding: 8px 12px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--border3);
   font-weight: 300;
 }
-.results-table tr:hover td { background: #0a0a0a; }
+.results-table tr:hover td { background: var(--bg3); }
 
-.key-cell { color: #228B22; font-weight: 700; }
+.key-cell { color: var(--green); font-weight: 700; }
 .bpm-cell { font-variant-numeric: tabular-nums; }
-.pop-cell { font-variant-numeric: tabular-nums; color: #888; }
-.ts-cell { color: #666; }
-.no-data { color: #333; }
-.artist-link { color: #228B22; }
+.pop-cell { font-variant-numeric: tabular-nums; color: var(--muted2); }
+.ts-cell { color: var(--muted); }
+.no-data { color: var(--muted4); }
+.artist-link { color: var(--green); }
 
 .fav-star {
   font-size: 16px;
   cursor: default;
   user-select: none;
-  color: #333;
+  color: var(--muted4);
   text-align: center;
   width: 24px;
 }
-.fav-star.favorited { color: #228B22; }
+.fav-star.favorited { color: var(--green); }
 
 .pagination {
   display: flex;
@@ -178,8 +192,8 @@ input[type="text"]:focus { border-color: #228B22; }
   align-items: center;
 }
 .page-btn {
-  background: #111;
-  border: 1px solid #333;
+  background: var(--bg2);
+  border: 1px solid var(--border);
   color: #fff;
   font-family: Arial, sans-serif;
   font-weight: 700;
@@ -189,8 +203,8 @@ input[type="text"]:focus { border-color: #228B22; }
   cursor: default;
   user-select: none;
 }
-.page-btn.active { background: #228B22; border-color: #228B22; color: #000; }
-.page-btn.disabled { color: #333; }
+.page-btn.active { background: var(--green); border-color: var(--green); color: #000; }
+.page-btn.disabled { color: var(--muted4); }
 
 .filter-pills {
   display: flex;
@@ -199,9 +213,9 @@ input[type="text"]:focus { border-color: #228B22; }
   margin-bottom: 12px;
 }
 .filter-pill {
-  background: #1a1a1a;
-  border: 1px solid #228B22;
-  color: #228B22;
+  background: var(--pill-bg);
+  border: 1px solid var(--green);
+  color: var(--green);
   font-size: 11px;
   font-weight: 700;
   padding: 4px 10px;
@@ -215,9 +229,9 @@ input[type="text"]:focus { border-color: #228B22; }
 }
 
 .pm-btn {
-  background: #111;
-  border: 2px solid #228B22;
-  color: #228B22;
+  background: var(--bg2);
+  border: 2px solid var(--green);
+  color: var(--green);
   font-family: Arial, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -228,7 +242,7 @@ input[type="text"]:focus { border-color: #228B22; }
   letter-spacing: 1px;
 }
 .pm-btn.active {
-  background: #228B22;
+  background: var(--green);
   color: #000;
 }
 
@@ -238,13 +252,13 @@ input[type="text"]:focus { border-color: #228B22; }
 .pm-group-header {
   font-size: 12px;
   font-weight: 700;
-  color: #228B22;
+  color: var(--green);
   margin-bottom: 8px;
   padding: 8px 0;
-  border-bottom: 1px solid #1a1a1a;
+  border-bottom: 1px solid var(--pill-bg);
 }
 .pm-group-header .shift-label { color: #E89030; }
-.pm-group-header .arrow { color: #666; margin: 0 8px; }
+.pm-group-header .arrow { color: var(--muted); margin: 0 8px; }
 .pm-group-header .target-label { color: #fff; }
 
 .pm-table {
@@ -254,17 +268,17 @@ input[type="text"]:focus { border-color: #228B22; }
 }
 .pm-table td {
   padding: 6px 12px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid var(--border3);
   font-weight: 300;
   font-size: 12px;
 }
-.pm-table tr:hover td { background: #0a0a0a; }
-.pm-empty { color: #333; font-size: 11px; font-weight: 300; padding: 8px 0; }
+.pm-table tr:hover td { background: var(--bg3); }
+.pm-empty { color: var(--muted4); font-size: 11px; font-weight: 300; padding: 8px 0; }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #444;
+  color: var(--muted3);
   font-weight: 300;
   font-size: 14px;
 }
@@ -276,6 +290,49 @@ input[type="text"]:focus { border-color: #228B22; }
   margin-bottom: 20px;
   align-items: flex-end;
 }
+
+.alpha-filter {
+  position: relative;
+  display: inline-block;
+}
+.alpha-selected {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  padding: 8px 12px;
+  min-width: 60px;
+  cursor: default;
+  user-select: none;
+}
+.alpha-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 60px;
+}
+.alpha-dropdown.open { display: block; }
+.alpha-option {
+  padding: 6px 12px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: #fff;
+  cursor: default;
+  user-select: none;
+}
+.alpha-option:hover { background: var(--green); color: #000; }
+.alpha-option.active { color: var(--green); }
 </style>
 </head>
 <body>
@@ -283,6 +340,7 @@ input[type="text"]:focus { border-color: #228B22; }
   <div class="header-row">
     <h1>KEY + BPM MATCHER</h1>
     <div style="display:flex;gap:8px;align-items:center">
+      <div class="toggle-btn" id="themeToggle">LIGHT</div>
       <div class="toggle-btn" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
     </div>
   </div>
@@ -319,32 +377,44 @@ input[type="text"]:focus { border-color: #228B22; }
 
   <div class="filters-row">
     <div class="control-group">
-      <label>POPULARITY MIN</label>
+      <label>POPULARITY 0-100 (HIGHER = MORE STREAMS)</label>
       <div class="range-control">
-        <input type="text" id="popMin" placeholder="0" value="">
+        <input type="text" id="popMin" placeholder="MIN" value="">
+        <span style="color:var(--muted4)">-</span>
+        <input type="text" id="popMax" placeholder="MAX" value="">
       </div>
     </div>
 
     <div class="control-group">
-      <label>SPEECHINESS MAX</label>
+      <label>SPEECHINESS 0.0-1.0 (LOWER = MORE MUSIC, HIGHER = SPOKEN WORD)</label>
       <div class="range-control">
-        <input type="text" id="speechMax" placeholder="1.0" value="">
+        <input type="text" id="speechMax" placeholder="MAX" value="">
       </div>
     </div>
 
     <div class="control-group">
-      <label>INSTRUMENTALNESS</label>
+      <label>INSTRUMENTALNESS 0.0-1.0 (HIGHER = NO VOCALS)</label>
       <div class="range-control">
         <input type="text" id="instMin" placeholder="MIN" value="">
-        <span style="color:#333">-</span>
+        <span style="color:var(--muted4)">-</span>
         <input type="text" id="instMax" placeholder="MAX" value="">
       </div>
     </div>
 
     <div class="control-group">
-      <label>TIME SIG</label>
+      <label>TIME SIG (3 = 3/4, 4 = 4/4, 5 = 5/4)</label>
       <div class="range-control">
         <input type="text" id="timeSig" placeholder="ANY" value="">
+      </div>
+    </div>
+  </div>
+
+  <div class="filters-row">
+    <div class="control-group">
+      <label>STARTS WITH</label>
+      <div class="alpha-filter" id="alphaFilter">
+        <div class="alpha-selected" id="alphaSelected">ALL</div>
+        <div class="alpha-dropdown" id="alphaDropdown"></div>
       </div>
     </div>
   </div>
@@ -370,7 +440,7 @@ input[type="text"]:focus { border-color: #228B22; }
 
   <div class="pagination" id="pagination"></div>
 
-  <div id="pitchMatchSection" style="display:none;margin-top:32px;border-top:1px solid #222;padding-top:20px">
+  <div id="pitchMatchSection" style="display:none;margin-top:32px;border-top:1px solid var(--border2);padding-top:20px">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
       <div class="pm-btn" id="pmBtn">PITCH MATCH</div>
       <div class="control-group" id="pmRangeGroup" style="display:none">
@@ -400,6 +470,7 @@ let currentTracks = [];
 let hasSearched = false;
 let prefetchCache = {};
 let lastSearchParams = '';
+let alphaFilter = '';
 
 function getFavorites() {
   try {
@@ -433,8 +504,60 @@ function isFavorited(artist, title) {
   return !!favs[(artist + '|||' + title).toLowerCase()];
 }
 
+function initAlphaFilter() {
+  const dd = document.getElementById('alphaDropdown');
+  const options = ['ALL', 'SYM', '0-9', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+  options.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'alpha-option' + (opt === 'ALL' ? ' active' : '');
+    el.textContent = opt;
+    el.addEventListener('click', () => {
+      alphaFilter = opt === 'ALL' ? '' : opt;
+      document.getElementById('alphaSelected').textContent = opt;
+      dd.classList.remove('open');
+      dd.querySelectorAll('.alpha-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
+    });
+    dd.appendChild(el);
+  });
+  document.getElementById('alphaSelected').addEventListener('click', () => {
+    dd.classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!document.getElementById('alphaFilter').contains(e.target)) {
+      dd.classList.remove('open');
+    }
+  });
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('kbm_theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeToggle').textContent = 'DARK';
+    document.getElementById('themeToggle').classList.add('active');
+  }
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      document.documentElement.removeAttribute('data-theme');
+      document.getElementById('themeToggle').textContent = 'LIGHT';
+      document.getElementById('themeToggle').classList.remove('active');
+      localStorage.setItem('kbm_theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeToggle').textContent = 'DARK';
+      document.getElementById('themeToggle').classList.add('active');
+      localStorage.setItem('kbm_theme', 'light');
+    }
+  });
+}
+
 function init() {
   document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
+  initTheme();
+  initAlphaFilter();
 
   const majSel = document.getElementById('keyMajor');
   NOTES.forEach(n => {
@@ -519,6 +642,7 @@ function buildParams(pageNum) {
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const popMin = document.getElementById('popMin').value.trim();
+  const popMax = document.getElementById('popMax').value.trim();
   const speechMax = document.getElementById('speechMax').value.trim();
   const instMin = document.getElementById('instMin').value.trim();
   const instMax = document.getElementById('instMax').value.trim();
@@ -529,10 +653,12 @@ function buildParams(pageNum) {
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
   if (popMin) params.set('popMin', popMin);
+  if (popMax) params.set('popMax', popMax);
   if (speechMax) params.set('speechMax', speechMax);
   if (instMin) params.set('instMin', instMin);
   if (instMax) params.set('instMax', instMax);
   if (timeSig) params.set('timeSig', timeSig);
+  if (alphaFilter) params.set('alpha', alphaFilter);
   params.set('sort', sortCol);
   params.set('dir', sortDir);
   params.set('page', pageNum);
