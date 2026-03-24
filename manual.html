@@ -95,6 +95,16 @@ ul {
   <p>Type an artist name, a song title, or both. Select a key. Set a BPM range. Hit search or press enter. All fields are optional but you need at least one.</p>
   <p>Results default to highest popularity first. Click any column header to re-sort.</p>
 
+  <h2>DATA RELIABILITY</h2>
+  <ul>
+    <li><strong>BPM</strong> - High reliability. Tempo detection is a solved problem. Trust these numbers.</li>
+    <li><strong>Key</strong> - Low reliability. Key detection is the weakest attribute in the dataset. Major/minor distinction is frequently wrong. Use it as a starting point, not a guarantee.</li>
+    <li><strong>Popularity</strong> - High reliability. Directly reflects stream count relative to other tracks.</li>
+    <li><strong>Speechiness</strong> - Moderate reliability. Good at separating music from spoken word. Less precise in the middle range.</li>
+    <li><strong>Instrumentalness</strong> - Moderate reliability. Good at identifying purely instrumental tracks. Less precise for tracks with light vocals.</li>
+    <li><strong>Time signature</strong> - Low reliability. Detection is limited to 3/4, 4/4, and 5/4. Songs in 6/8, 7/8, or other meters get bucketed into the closest option.</li>
+  </ul>
+
   <h2>FILTERS</h2>
   <ul>
     <li><strong>Popularity</strong> (0 to 100): How many streams a track has relative to other tracks. Default minimum is 1, which removes 209 million dead or delisted tracks.</li>
@@ -125,7 +135,7 @@ ul {
   <p>Click "Light" in the top right. Your preference is saved.</p>
 
   <h2>LIMITATIONS</h2>
-  <p>The data is only as good as Spotify's analysis. Key detection is imperfect. Time signature detection is limited to 3/4, 4/4, and 5/4. Songs in 6/8 or 7/8 get bucketed into the closest option. Popularity scores change over time but our data is a snapshot.</p>
+  <p>Popularity scores change over time but our data is a snapshot.</p>
   <p>We have 254 million tracks. That includes a lot of noise. The default filters help, but some junk will always get through.</p>
 
   <h2>API</h2>
