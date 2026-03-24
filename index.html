@@ -505,6 +505,14 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
 
     <div class="control-group">
+      <label>BPM DECIMALS</label>
+      <div class="alpha-filter" id="bpmDecFilter">
+        <div class="alpha-selected" id="bpmDecSelected">3</div>
+        <div class="alpha-dropdown" id="bpmDecDropdown"></div>
+      </div>
+    </div>
+
+    <div class="control-group">
       <label>&nbsp;</label>
       <div class="search-btn" id="searchBtn">SEARCH</div>
     </div>
@@ -665,6 +673,7 @@ let lastSearchParams = '';
 let alphaFilter = '';
 let alphaField = 'artist';
 let selectedTimeSig = '';
+let bpmDecimals = 3;
 
 function getFavorites() {
   try {
@@ -696,6 +705,29 @@ function toggleFavorite(track) {
 function isFavorited(artist, title) {
   const favs = getFavorites();
   return !!favs[(artist + '|||' + title).toLowerCase()];
+}
+
+function initBpmDecDropdown() {
+  const dd = document.getElementById('bpmDecDropdown');
+  const sel = document.getElementById('bpmDecSelected');
+  [0,1,2,3].forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'alpha-option' + (n === 3 ? ' active' : '');
+    el.textContent = n;
+    el.addEventListener('click', () => {
+      bpmDecimals = n;
+      sel.textContent = n;
+      dd.classList.remove('open');
+      dd.querySelectorAll('.alpha-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      if (hasSearched) render(currentTracks);
+    });
+    dd.appendChild(el);
+  });
+  sel.addEventListener('click', () => dd.classList.toggle('open'));
+  document.addEventListener('click', e => {
+    if (!document.getElementById('bpmDecFilter').contains(e.target)) dd.classList.remove('open');
+  });
 }
 
 function initTsDropdown() {
@@ -880,6 +912,7 @@ function init() {
   document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
   initTheme();
   initAlphaFilter();
+  initBpmDecDropdown();
   initTsDropdown();
 
   initKeyDropdown('keyMajor', 'Major');
@@ -1070,7 +1103,7 @@ function render(tracks) {
 
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
-    const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(3) : '-';
+    const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(bpmDecimals) : '-';
     const keyStr = t.key ? esc(t.key) : '-';
     const popStr = t.popularity != null ? t.popularity : '-';
     const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
@@ -1313,7 +1346,7 @@ function renderPitchMatch(results, targetKey, targetBpm) {
           <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
           <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
           <td>${esc(t.title)}</td>
-          <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(3) : '-'}</td>
+          <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(bpmDecimals) : '-'}</td>
           <td class="key-cell">${t.key ? esc(t.key) : '-'}</td>
         </tr>`;
       }
