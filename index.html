@@ -286,6 +286,7 @@ input[type="text"]:focus { border-color: var(--green); }
 .ts-cell { color: var(--muted); }
 .no-data { color: var(--muted4); }
 .artist-link { color: var(--green); }
+.title-link { color: var(--green); }
 
 .fav-star {
   font-size: 16px;
@@ -1210,7 +1211,7 @@ function render(tracks) {
     return `<tr>
       <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
       <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
-      <td>${esc(t.title)}</td>
+      <td class="title-link" data-title="${escAttr(t.title)}">${esc(t.title)}</td>
       <td class="bpm-cell bpm-link" data-bpm="${bpmStr}">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
       <td class="pop-cell">${popStr}</td>
@@ -1256,6 +1257,23 @@ function render(tracks) {
       if (!bpm || bpm === '-') return;
       document.getElementById('bpmMin').value = bpm;
       document.getElementById('bpmMax').value = bpm;
+      updatePills();
+      page = 0;
+      hasSearched = true;
+      prefetchCache = {};
+      document.getElementById('emptyState').style.display = 'none';
+      fetchTracks();
+    });
+  });
+
+  tbody.querySelectorAll('.title-link').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById('searchArtist').value = '';
+      document.getElementById('searchTitle').value = el.dataset.title;
+      selectedKeys.clear();
+      ['keyMajor', 'keyMinor'].forEach(p => { document.getElementById(p + 'Selected').textContent = 'ANY'; document.getElementById(p + 'Selected').classList.remove('has-value'); });
+      document.getElementById('bpmMin').value = '';
+      document.getElementById('bpmMax').value = '';
       updatePills();
       page = 0;
       hasSearched = true;
