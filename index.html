@@ -70,7 +70,15 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
   display: flex;
   gap: 16px;
   align-items: flex-end;
+  width: 100%;
 }
+.controls-row .control-group { flex: 1; }
+.controls-row .key-dropdown-selected,
+.controls-row .key-dropdown-menu,
+.controls-row .alpha-selected { width: 100%; }
+.controls-row input[type="text"] { width: 100%; }
+.controls-row .bpm-control { width: 100%; }
+.controls-row .bpm-control input[type="text"] { flex: 1; width: auto; }
 
 .control-group { display: flex; flex-direction: column; gap: 4px; }
 .control-group label { font-size: 10px; font-weight: 300; letter-spacing: 1px; color: var(--muted2); }
@@ -223,6 +231,8 @@ input[type="text"]:focus { border-color: var(--green); }
   cursor: default;
   user-select: none;
   letter-spacing: 1px;
+  width: 100%;
+  text-align: center;
 }
 
 .stats {
