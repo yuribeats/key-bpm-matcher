@@ -538,9 +538,10 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
 
     <div class="control-group" data-col="ts">
-      <label class="label-with-tip"><span class="col-toggle" data-col="ts">X</span> TIME SIG <span class="tip-trigger">?<span class="tip-text">3 = 3/4, 4 = 4/4, 5 = 5/4</span></span></label>
-      <div class="range-control">
-        <input type="text" id="timeSig" placeholder="ANY" value="">
+      <label class="label-with-tip"><span class="col-toggle" data-col="ts">X</span> TIME SIG <span class="tip-trigger">?<span class="tip-text">BEATS PER MEASURE</span></span></label>
+      <div class="alpha-filter" id="tsFilter">
+        <div class="alpha-selected" id="tsSelected">ANY</div>
+        <div class="alpha-dropdown" id="tsDropdown"></div>
       </div>
     </div>
   </div>
@@ -659,6 +660,7 @@ let prefetchCache = {};
 let lastSearchParams = '';
 let alphaFilter = '';
 let alphaField = 'artist';
+let selectedTimeSig = '';
 
 function getFavorites() {
   try {
@@ -690,6 +692,36 @@ function toggleFavorite(track) {
 function isFavorited(artist, title) {
   const favs = getFavorites();
   return !!favs[(artist + '|||' + title).toLowerCase()];
+}
+
+function initTsDropdown() {
+  const dd = document.getElementById('tsDropdown');
+  const sel = document.getElementById('tsSelected');
+  const options = [
+    { val: '', label: 'ANY' },
+    { val: '4', label: '4/4' },
+    { val: '3', label: '3/4' },
+    { val: '5', label: '5/4' },
+    { val: '1', label: '1/4' }
+  ];
+  options.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'alpha-option' + (opt.val === '' ? ' active' : '');
+    el.textContent = opt.label;
+    el.addEventListener('click', () => {
+      selectedTimeSig = opt.val;
+      sel.textContent = opt.label;
+      dd.classList.remove('open');
+      dd.querySelectorAll('.alpha-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
+      if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
+    });
+    dd.appendChild(el);
+  });
+  sel.addEventListener('click', () => dd.classList.toggle('open'));
+  document.addEventListener('click', e => {
+    if (!document.getElementById('tsFilter').contains(e.target)) dd.classList.remove('open');
+  });
 }
 
 function initAlphaFilter() {
@@ -844,6 +876,7 @@ function init() {
   document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
   initTheme();
   initAlphaFilter();
+  initTsDropdown();
 
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
@@ -909,7 +942,7 @@ function buildParams(pageNum) {
   const speechMax = document.getElementById('speechMax').value.trim();
   const instMin = document.getElementById('instMin').value.trim();
   const instMax = document.getElementById('instMax').value.trim();
-  const timeSig = document.getElementById('timeSig').value.trim();
+  const timeSig = selectedTimeSig;
   const params = new URLSearchParams();
   if (artist) params.set('artist', artist);
   if (title) params.set('title', title);
