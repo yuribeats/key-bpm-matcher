@@ -432,7 +432,9 @@ input[type="text"]:focus { border-color: var(--green); }
         <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="key">KEY <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="popularity">POP <span class="sort-arrow"></span></th>
-        <th>TS</th>
+        <th class="sortable" data-sort="speechiness">SPEECH <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="instrumentalness">INST <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="time_signature">TS <span class="sort-arrow"></span></th>
       </tr>
     </thead>
     <tbody id="results"></tbody>
@@ -767,6 +769,8 @@ function render(tracks) {
     const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-';
     const keyStr = t.key ? esc(t.key) : '-';
     const popStr = t.popularity != null ? t.popularity : '-';
+    const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
+    const instStr = t.instrumentalness != null ? parseFloat(t.instrumentalness).toFixed(2) : '-';
     const tsStr = t.time_signature != null ? t.time_signature + '/4' : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
@@ -776,6 +780,8 @@ function render(tracks) {
       <td class="bpm-cell">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
       <td class="pop-cell">${popStr}</td>
+      <td class="pop-cell">${speechStr}</td>
+      <td class="pop-cell">${instStr}</td>
       <td class="ts-cell">${tsStr}</td>
     </tr>`;
   }).join('');
