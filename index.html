@@ -424,11 +424,16 @@ input[type="text"]:focus { border-color: var(--green); }
 
 .filters-row {
   display: flex;
-  flex-wrap: wrap;
   gap: 24px;
   margin-bottom: 20px;
   align-items: flex-end;
+  width: 100%;
 }
+.filters-row .control-group { flex: 1; }
+.filters-row .range-control { width: 100%; }
+.filters-row .range-control input[type="text"] { flex: 1; width: auto; }
+.filters-row .alpha-filter { width: 100%; }
+.filters-row .alpha-selected { width: 100%; }
 
 .alpha-filter {
   position: relative;
