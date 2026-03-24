@@ -371,6 +371,46 @@ input[type="text"]:focus { border-color: var(--green); }
 }
 .dev-param-table td:first-child { font-family: monospace; text-transform: none; color: var(--green); }
 
+.site-footer {
+  margin-top: 60px;
+  border-top: 1px solid var(--border);
+  padding: 20px 0;
+  display: flex;
+  gap: 24px;
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--muted);
+}
+.site-footer a { color: var(--muted2); }
+.site-footer a:hover { color: var(--green); }
+
+.legal-section {
+  display: none;
+  margin-top: 40px;
+  border-top: 2px solid var(--border);
+  padding-top: 40px;
+}
+.legal-section.open { display: block; }
+.legal-section h2 {
+  font-size: 20px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+.legal-section p {
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--fg);
+  margin-bottom: 16px;
+  text-transform: none;
+}
+.legal-section strong {
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--green);
+}
+
 .filters-row {
   display: flex;
   flex-wrap: wrap;
@@ -648,6 +688,50 @@ input[type="text"]:focus { border-color: var(--green); }
 
     <h3>RATE LIMITS</h3>
     <div class="dev-docs">1,000 REQUESTS PER DAY. RESETS AT MIDNIGHT UTC.</div>
+  </div>
+
+  <div class="legal-section" id="privacySection">
+    <h2>PRIVACY POLICY</h2>
+    <p><strong>Effective date: March 24, 2026</strong></p>
+    <p>everysong.site ("the Service") is a music metadata search tool. This policy describes what data we collect and how we use it.</p>
+    <p><strong>What we collect</strong></p>
+    <p>If you register for an API key, we collect your email address. We store it alongside your API key and a count of daily requests. We do not collect any other personal information. The site itself uses no cookies, no analytics, and no tracking scripts. Favorites and theme preferences are stored in your browser's localStorage and never sent to our servers.</p>
+    <p><strong>How we use your data</strong></p>
+    <p>Your email is used solely to associate your API key with an account. Daily request counts are used to enforce rate limits. We do not sell, share, or disclose your email to any third party.</p>
+    <p><strong>Data retention</strong></p>
+    <p>API key records are retained as long as the key is active. If you want your data deleted, email the address listed on the GitHub repository and we will remove your record.</p>
+    <p><strong>Third-party services</strong></p>
+    <p>The site is hosted on Vercel. API requests are proxied through Vercel to our database server. Vercel's privacy policy applies to their infrastructure. We do not use any other third-party services.</p>
+    <p><strong>Music data</strong></p>
+    <p>The database contains metadata (artist name, track title, BPM, key, popularity, speechiness, instrumentalness, time signature) derived from publicly available Spotify data. No audio content is stored or served.</p>
+    <p><strong>Changes</strong></p>
+    <p>We may update this policy. Changes will be reflected on this page with an updated effective date.</p>
+  </div>
+
+  <div class="legal-section" id="termsSection">
+    <h2>TERMS OF SERVICE</h2>
+    <p><strong>Effective date: March 24, 2026</strong></p>
+    <p><strong>Acceptance</strong></p>
+    <p>By using everysong.site or its API, you agree to these terms.</p>
+    <p><strong>The service</strong></p>
+    <p>everysong.site provides a searchable index of music metadata. The data is provided as-is with no guarantee of accuracy or completeness. Key, BPM, and other audio attributes are derived from automated analysis and may contain errors.</p>
+    <p><strong>API usage</strong></p>
+    <p>API keys are free and limited to 1,000 requests per day. You may use the API for personal projects, commercial applications, research, or any lawful purpose. You may not resell raw bulk exports of the database. You may not use the API in a way that degrades service for other users.</p>
+    <p><strong>Prohibited use</strong></p>
+    <p>Do not attempt to overload, scrape the full database, or circumvent rate limits. Do not use the service for any unlawful purpose. We reserve the right to revoke API keys that violate these terms.</p>
+    <p><strong>Intellectual property</strong></p>
+    <p>Track metadata (artist names, song titles) belongs to the respective rights holders. The database compilation, API, and interface are our work. You may not clone the service wholesale.</p>
+    <p><strong>Limitation of liability</strong></p>
+    <p>The service is provided "as is" without warranty of any kind. We are not liable for any damages arising from the use or inability to use the service. Data may be inaccurate. Availability is not guaranteed.</p>
+    <p><strong>Termination</strong></p>
+    <p>We may suspend or terminate access to the service at any time, for any reason, without notice.</p>
+    <p><strong>Changes</strong></p>
+    <p>We may update these terms. Continued use of the service after changes constitutes acceptance.</p>
+  </div>
+
+  <div class="site-footer">
+    <a id="privacyLink">PRIVACY</a>
+    <a id="termsLink">TERMS</a>
   </div>
 </div>
 
@@ -1294,6 +1378,19 @@ document.getElementById('devRegisterBtn').addEventListener('click', async () => 
 });
 document.getElementById('devEmail').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('devRegisterBtn').click();
+});
+
+document.getElementById('privacyLink').addEventListener('click', () => {
+  const el = document.getElementById('privacySection');
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('open'));
+  if (!wasOpen) { el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth' }); }
+});
+document.getElementById('termsLink').addEventListener('click', () => {
+  const el = document.getElementById('termsSection');
+  const wasOpen = el.classList.contains('open');
+  document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('open'));
+  if (!wasOpen) { el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth' }); }
 });
 </script>
 </body>
