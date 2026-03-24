@@ -1254,8 +1254,6 @@ function render(tracks) {
     el.addEventListener('click', () => {
       const bpm = el.dataset.bpm;
       if (!bpm || bpm === '-') return;
-      document.getElementById('searchArtist').value = '';
-      document.getElementById('searchTitle').value = '';
       document.getElementById('bpmMin').value = bpm;
       document.getElementById('bpmMax').value = bpm;
       updatePills();
