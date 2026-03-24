@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MANUAL - EVERY SONG</title>
+<style>
+:root {
+  --bg: #000; --fg: #fff; --bg2: #111;
+  --border: #333; --border2: #222;
+  --muted: #666; --muted2: #888;
+  --green: #228B22;
+}
+[data-theme="light"] {
+  --bg: #fff; --fg: #000; --bg2: #f0f0f0;
+  --border: #ccc; --border2: #ddd;
+  --muted: #666; --muted2: #555;
+  --green: #228B22;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  line-height: 1.4;
+}
+a { color: var(--green); text-decoration: none; }
+.container { max-width: 800px; margin: 0 auto; padding: 20px; }
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; }
+h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+p {
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 2;
+  text-transform: none;
+  margin-bottom: 12px;
+}
+ul {
+  font-size: 12px;
+  font-weight: 300;
+  line-height: 2;
+  text-transform: none;
+  margin-bottom: 12px;
+  padding-left: 20px;
+}
+.toggle-btn {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  color: var(--fg);
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 11px;
+  padding: 8px 16px;
+  cursor: default;
+  user-select: none;
+}
+.toggle-btn.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #000;
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header-row">
+    <h1>MANUAL</h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="toggle-btn" id="themeToggle">LIGHT</div>
+      <a href="/" class="toggle-btn">BACK TO SEARCH</a>
+    </div>
+  </div>
+
+  <h2>WHAT THIS IS</h2>
+  <p>A searchable index of 254 million tracks with key, BPM, popularity, speechiness, instrumentalness, and time signature. The data comes from Spotify's audio analysis. We did not create it. We organized it and made it searchable.</p>
+  <p>There is no other public tool that lets you search this many tracks by this many attributes at once. That is the only thing that makes this useful.</p>
+
+  <h2>SEARCH</h2>
+  <p>Type an artist name, a song title, or both. Select a key. Set a BPM range. Hit search or press enter. All fields are optional but you need at least one.</p>
+  <p>Results default to highest popularity first. Click any column header to re-sort.</p>
+
+  <h2>FILTERS</h2>
+  <ul>
+    <li><strong>Popularity</strong> (0 to 100): How many streams a track has relative to other tracks. Default minimum is 1, which removes 209 million dead or delisted tracks.</li>
+    <li><strong>Speechiness</strong> (0.0 to 1.0): How much of the track is spoken word. Default maximum is 0.33, which is Spotify's threshold for "probably speech." This removes podcasts and audiobooks.</li>
+    <li><strong>Instrumentalness</strong> (0.0 to 1.0): How likely the track has no vocals. Useful for finding beats, scores, and instrumentals.</li>
+    <li><strong>Time signature</strong>: Most tracks are 4/4. You can filter for 3/4 (waltzes, some ballads), 5/4 (odd time), or other.</li>
+  </ul>
+  <p>Hover over the ? next to each filter for a quick reminder. Click the X to disable a filter and hide its column.</p>
+
+  <h2>BPM DECIMALS</h2>
+  <p>The dropdown next to BPM range controls how many decimal places are shown. At 0, a track at 130.7 BPM displays as 131. This also widens pitch match results at lower precision.</p>
+
+  <h2>STARTS WITH</h2>
+  <p>Filter results by first letter of artist or title. Toggle between the two with the button next to the dropdown.</p>
+
+  <h2>PITCH MATCH</h2>
+  <p>Select a key and BPM range, then click Pitch Match. This finds tracks in nearby keys that, when pitch-shifted, would land in your target key and BPM.</p>
+  <p>Use case: you have a track at 128 BPM in C Major and want to mix it with something that is not in C Major but could be pitched into it. Pitch Match finds those tracks.</p>
+  <p>The semitone range slider controls how far to look. A wider range finds more results but requires more extreme pitch shifting. Enable "Include Relative Keys" to also search relative major or minor keys.</p>
+
+  <h2>FAVORITES</h2>
+  <p>Click the star next to any track to save it. Favorites are stored in your browser. Nothing is sent to our servers. Click "Favorites" in the top right to view them. They persist across sessions.</p>
+
+  <h2>EXPORT</h2>
+  <p>The "Export CSV" button downloads the current page of results as a spreadsheet. The filename reflects your search criteria.</p>
+
+  <h2>LIGHT MODE</h2>
+  <p>Click "Light" in the top right. Your preference is saved.</p>
+
+  <h2>LIMITATIONS</h2>
+  <p>The data is only as good as Spotify's analysis. Key detection is imperfect. Time signature detection is limited to 3/4, 4/4, and 5/4. Songs in 6/8 or 7/8 get bucketed into the closest option. Popularity scores change over time but our data is a snapshot.</p>
+  <p>We have 254 million tracks. That includes a lot of noise. The default filters help, but some junk will always get through.</p>
+
+  <h2>API</h2>
+  <p>Free API access for developers. See <a href="/developers.html">the developer page</a> for documentation and to get a key.</p>
+</div>
+
+<script>
+const saved = localStorage.getItem('kbm_theme');
+if (saved === 'light') {
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.getElementById('themeToggle').textContent = 'DARK';
+  document.getElementById('themeToggle').classList.add('active');
+}
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeToggle').textContent = 'LIGHT';
+    document.getElementById('themeToggle').classList.remove('active');
+    localStorage.setItem('kbm_theme', 'dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeToggle').textContent = 'DARK';
+    document.getElementById('themeToggle').classList.add('active');
+    localStorage.setItem('kbm_theme', 'light');
+  }
+});
+</script>
+</body>
+</html>
