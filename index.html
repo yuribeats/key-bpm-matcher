@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KEY + BPM MATCHER</title>
+<title>EVERY SONG</title>
 <style>
 :root {
   --bg: #000; --fg: #fff; --bg2: #111; --bg3: #0a0a0a;
@@ -462,7 +462,7 @@ input[type="text"]:focus { border-color: var(--green); }
 <body>
 <div class="container">
   <div class="header-row">
-    <h1>KEY + BPM MATCHER</h1>
+    <h1>EVERY SONG</h1>
     <div style="display:flex;gap:8px;align-items:center">
       <div class="toggle-btn" id="themeToggle">LIGHT</div>
       <div class="toggle-btn" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
@@ -471,8 +471,12 @@ input[type="text"]:focus { border-color: var(--green); }
 
   <div class="controls">
     <div class="control-group">
-      <label>SEARCH</label>
-      <input type="text" id="search" placeholder="ARTIST OR TITLE">
+      <label>ARTIST</label>
+      <input type="text" id="searchArtist" placeholder="ARTIST">
+    </div>
+    <div class="control-group">
+      <label>TITLE</label>
+      <input type="text" id="searchTitle" placeholder="TITLE">
     </div>
 
     <div class="control-group">
@@ -518,6 +522,8 @@ input[type="text"]:focus { border-color: var(--green); }
     <div class="control-group" data-col="speech">
       <label class="label-with-tip"><span class="col-toggle" data-col="speech">X</span> SPEECHINESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. LOWER = MORE MUSIC. HIGHER = SPOKEN WORD.</span></span></label>
       <div class="range-control">
+        <input type="text" id="speechMin" placeholder="MIN" value="">
+        <span style="color:var(--muted4)">-</span>
         <input type="text" id="speechMax" placeholder="MAX" value="">
       </div>
     </div>
@@ -863,13 +869,15 @@ function init() {
     fetchTracks();
   });
 
-  document.getElementById('search').addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      page = 0;
-      hasSearched = true;
-      document.getElementById('emptyState').style.display = 'none';
-      fetchTracks();
-    }
+  ['searchArtist', 'searchTitle'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        page = 0;
+        hasSearched = true;
+        document.getElementById('emptyState').style.display = 'none';
+        fetchTracks();
+      }
+    });
   });
 
   document.getElementById('favToggle').addEventListener('click', () => {
@@ -891,22 +899,27 @@ function init() {
 
 
 function buildParams(pageNum) {
-  const q = document.getElementById('search').value.trim();
+  const artist = document.getElementById('searchArtist').value.trim();
+  const title = document.getElementById('searchTitle').value.trim();
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const popMin = document.getElementById('popMin').value.trim();
   const popMax = document.getElementById('popMax').value.trim();
+  const speechMin = document.getElementById('speechMin').value.trim();
   const speechMax = document.getElementById('speechMax').value.trim();
   const instMin = document.getElementById('instMin').value.trim();
   const instMax = document.getElementById('instMax').value.trim();
   const timeSig = document.getElementById('timeSig').value.trim();
   const params = new URLSearchParams();
-  if (q) params.set('q', q);
+  if (artist) params.set('artist', artist);
+  if (title) params.set('title', title);
+  if (artist || title) params.set('q', [artist, title].filter(Boolean).join(' '));
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
   if (popMin) params.set('popMin', popMin);
   if (popMax) params.set('popMax', popMax);
+  if (speechMin) params.set('speechMin', speechMin);
   if (speechMax) params.set('speechMax', speechMax);
   if (instMin) params.set('instMin', instMin);
   if (instMax) params.set('instMax', instMax);
@@ -932,7 +945,7 @@ async function fetchTracks() {
   const params = buildParams(page);
   const baseKey = params.toString().replace(/&?page=\d+/, '');
 
-  if (!params.get('q') && !params.get('key') && !params.get('bpmMin') && !params.get('bpmMax') && !params.get('popMin')) {
+  if (!params.get('artist') && !params.get('title') && !params.get('key') && !params.get('bpmMin') && !params.get('bpmMax') && !params.get('popMin')) {
     document.getElementById('stats').innerHTML = 'ENTER A SEARCH TERM, SELECT A KEY, OR SET A BPM RANGE';
     document.getElementById('results').innerHTML = '';
     document.getElementById('pagination').innerHTML = '';
@@ -976,7 +989,8 @@ async function fetchTracks() {
 
 function renderFavorites() {
   const favs = getFavorites();
-  const q = document.getElementById('search').value.trim().toLowerCase();
+  const qArtist = document.getElementById('searchArtist').value.trim().toLowerCase();
+  const qTitle = document.getElementById('searchTitle').value.trim().toLowerCase();
   const bpmMin = parseFloat(document.getElementById('bpmMin').value) || 0;
   const bpmMax = parseFloat(document.getElementById('bpmMax').value) || 999;
 
@@ -984,7 +998,8 @@ function renderFavorites() {
     artist: f.artist, title: f.title, bpm: f.bpm, key: f.key, popularity: f.popularity, time_signature: f.time_signature
   }));
 
-  if (q) tracks = tracks.filter(t => t.artist.toLowerCase().includes(q) || t.title.toLowerCase().includes(q));
+  if (qArtist) tracks = tracks.filter(t => t.artist.toLowerCase().includes(qArtist));
+  if (qTitle) tracks = tracks.filter(t => t.title.toLowerCase().includes(qTitle));
   if (selectedKeys.size > 0) tracks = tracks.filter(t => t.key && selectedKeys.has(t.key));
   if (bpmMin > 0) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) >= bpmMin);
   if (bpmMax < 999) tracks = tracks.filter(t => t.bpm && Math.round(t.bpm) <= bpmMax);
@@ -1052,7 +1067,8 @@ function render(tracks) {
 
   tbody.querySelectorAll('.artist-link').forEach(el => {
     el.addEventListener('click', () => {
-      document.getElementById('search').value = el.dataset.artist;
+      document.getElementById('searchArtist').value = el.dataset.artist;
+      document.getElementById('searchTitle').value = '';
       selectedKeys.clear();
       ['keyMajor', 'keyMinor'].forEach(p => { document.getElementById(p + 'Selected').textContent = 'ANY'; document.getElementById(p + 'Selected').classList.remove('has-value'); });
       document.getElementById('bpmMin').value = '';
@@ -1178,7 +1194,7 @@ async function fetchPitchMatch() {
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const range = document.getElementById('pmRange').value;
-  const q = document.getElementById('search').value.trim();
+  const q = [document.getElementById('searchArtist').value.trim(), document.getElementById('searchTitle').value.trim()].filter(Boolean).join(' ');
   const popMin = document.getElementById('popMin').value.trim();
   const speechMax = document.getElementById('speechMax').value.trim();
   const instMin = document.getElementById('instMin').value.trim();
@@ -1285,7 +1301,8 @@ function renderPitchMatch(results, targetKey, targetBpm) {
 
   container.querySelectorAll('.artist-link').forEach(el => {
     el.addEventListener('click', () => {
-      document.getElementById('search').value = el.dataset.artist;
+      document.getElementById('searchArtist').value = el.dataset.artist;
+      document.getElementById('searchTitle').value = '';
       selectedKeys.clear();
       ['keyMajor', 'keyMinor'].forEach(p => { document.getElementById(p + 'Selected').textContent = 'ANY'; document.getElementById(p + 'Selected').classList.remove('has-value'); });
       document.getElementById('bpmMin').value = '';
