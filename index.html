@@ -85,28 +85,87 @@ input[type="text"] {
 }
 input[type="text"]:focus { border-color: var(--green); }
 
-.key-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.key-dropdown {
+  position: relative;
+  display: inline-block;
 }
-.key-btn {
+.key-dropdown-selected {
   background: var(--bg2);
   border: 1px solid var(--border);
   color: var(--fg);
   font-family: Arial, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
-  font-size: 11px;
-  padding: 6px 10px;
+  font-size: 13px;
+  padding: 8px 12px;
+  min-width: 120px;
   cursor: default;
   user-select: none;
 }
-.key-btn.active {
-  background: var(--green);
-  border-color: var(--green);
-  color: #000;
+.key-dropdown-selected.has-value { color: var(--green); }
+.key-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  z-index: 100;
+  max-height: 300px;
+  overflow-y: auto;
+  min-width: 120px;
 }
+.key-dropdown-menu.open { display: block; }
+.key-dropdown-item {
+  padding: 6px 12px;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--fg);
+  cursor: default;
+  user-select: none;
+}
+.key-dropdown-item:hover { background: var(--green); color: #000; }
+.key-dropdown-item.active { color: var(--green); }
+
+.label-with-tip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--muted3);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted3);
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+}
+.tip-trigger .tip-text {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 300;
+  padding: 6px 10px;
+  white-space: nowrap;
+  z-index: 200;
+  margin-bottom: 4px;
+}
+.tip-trigger:hover .tip-text { display: block; }
+.tip-trigger:hover { color: var(--green); border-color: var(--green); }
 
 .bpm-control {
   display: flex;
@@ -481,11 +540,17 @@ input[type="text"]:focus { border-color: var(--green); }
 
     <div class="control-group">
       <label>KEY (MAJOR)</label>
-      <div class="key-selector" id="keyMajor"></div>
+      <div class="key-dropdown" id="keyMajorDropdown">
+        <div class="key-dropdown-selected" id="keyMajorSelected">ANY</div>
+        <div class="key-dropdown-menu" id="keyMajorMenu"></div>
+      </div>
     </div>
     <div class="control-group">
       <label>KEY (MINOR)</label>
-      <div class="key-selector" id="keyMinor"></div>
+      <div class="key-dropdown" id="keyMinorDropdown">
+        <div class="key-dropdown-selected" id="keyMinorSelected">ANY</div>
+        <div class="key-dropdown-menu" id="keyMinorMenu"></div>
+      </div>
     </div>
 
     <div class="control-group">
@@ -505,7 +570,7 @@ input[type="text"]:focus { border-color: var(--green); }
 
   <div class="filters-row">
     <div class="control-group">
-      <label>POPULARITY 0-100 (HIGHER = MORE STREAMS)</label>
+      <label class="label-with-tip">POPULARITY <span class="tip-trigger">?<span class="tip-text">0-100. HIGHER = MORE STREAMS.</span></span></label>
       <div class="range-control">
         <input type="text" id="popMin" placeholder="MIN" value="">
         <span style="color:var(--muted4)">-</span>
@@ -514,14 +579,14 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
 
     <div class="control-group">
-      <label>SPEECHINESS 0.0-1.0 (LOWER = MORE MUSIC, HIGHER = SPOKEN WORD)</label>
+      <label class="label-with-tip">SPEECHINESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. LOWER = MORE MUSIC. HIGHER = SPOKEN WORD.</span></span></label>
       <div class="range-control">
         <input type="text" id="speechMax" placeholder="MAX" value="">
       </div>
     </div>
 
     <div class="control-group">
-      <label>INSTRUMENTALNESS 0.0-1.0 (HIGHER = NO VOCALS)</label>
+      <label class="label-with-tip">INSTRUMENTALNESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. HIGHER = NO VOCALS.</span></span></label>
       <div class="range-control">
         <input type="text" id="instMin" placeholder="MIN" value="">
         <span style="color:var(--muted4)">-</span>
@@ -530,7 +595,7 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
 
     <div class="control-group">
-      <label>TIME SIG (3 = 3/4, 4 = 4/4, 5 = 5/4)</label>
+      <label class="label-with-tip">TIME SIG <span class="tip-trigger">?<span class="tip-text">3 = 3/4, 4 = 4/4, 5 = 5/4</span></span></label>
       <div class="range-control">
         <input type="text" id="timeSig" placeholder="ANY" value="">
       </div>
@@ -540,9 +605,12 @@ input[type="text"]:focus { border-color: var(--green); }
   <div class="filters-row">
     <div class="control-group">
       <label>STARTS WITH</label>
-      <div class="alpha-filter" id="alphaFilter">
-        <div class="alpha-selected" id="alphaSelected">ALL</div>
-        <div class="alpha-dropdown" id="alphaDropdown"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="toggle-btn active" id="alphaFieldToggle">ARTIST</div>
+        <div class="alpha-filter" id="alphaFilter">
+          <div class="alpha-selected" id="alphaSelected">ALL</div>
+          <div class="alpha-dropdown" id="alphaDropdown"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -751,6 +819,7 @@ let hasSearched = false;
 let prefetchCache = {};
 let lastSearchParams = '';
 let alphaFilter = '';
+let alphaField = 'artist';
 
 function getFavorites() {
   try {
@@ -809,6 +878,74 @@ function initAlphaFilter() {
       dd.classList.remove('open');
     }
   });
+
+  document.getElementById('alphaFieldToggle').addEventListener('click', () => {
+    alphaField = alphaField === 'artist' ? 'title' : 'artist';
+    document.getElementById('alphaFieldToggle').textContent = alphaField.toUpperCase();
+    if (hasSearched && alphaFilter) { page = 0; prefetchCache = {}; fetchTracks(); }
+  });
+}
+
+function resetKeyDropdown(keyName) {
+  const mode = keyName.includes('Major') ? 'Major' : 'Minor';
+  const prefix = mode === 'Major' ? 'keyMajor' : 'keyMinor';
+  const hasAny = !Array.from(selectedKeys).some(k => k.includes(mode));
+  if (hasAny) {
+    document.getElementById(prefix + 'Selected').textContent = 'ANY';
+    document.getElementById(prefix + 'Selected').classList.remove('has-value');
+    const menu = document.getElementById(prefix + 'Menu');
+    menu.querySelectorAll('.key-dropdown-item').forEach(i => i.classList.remove('active'));
+    if (menu.firstChild) menu.firstChild.classList.add('active');
+  }
+}
+
+function initKeyDropdown(prefix, mode) {
+  const menu = document.getElementById(prefix + 'Menu');
+  const selected = document.getElementById(prefix + 'Selected');
+  const wrapper = document.getElementById(prefix + 'Dropdown');
+
+  const anyItem = document.createElement('div');
+  anyItem.className = 'key-dropdown-item active';
+  anyItem.textContent = 'ANY';
+  anyItem.addEventListener('click', () => {
+    NOTES.forEach(n => selectedKeys.delete(n + ' ' + mode));
+    selected.textContent = 'ANY';
+    selected.classList.remove('has-value');
+    menu.classList.remove('open');
+    menu.querySelectorAll('.key-dropdown-item').forEach(i => i.classList.remove('active'));
+    anyItem.classList.add('active');
+    updatePills();
+    if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
+  });
+  menu.appendChild(anyItem);
+
+  NOTES.forEach(n => {
+    const k = n + ' ' + mode;
+    const item = document.createElement('div');
+    item.className = 'key-dropdown-item';
+    item.textContent = n;
+    item.addEventListener('click', () => {
+      NOTES.forEach(nn => selectedKeys.delete(nn + ' ' + mode));
+      selectedKeys.add(k);
+      selected.textContent = n;
+      selected.classList.add('has-value');
+      menu.classList.remove('open');
+      menu.querySelectorAll('.key-dropdown-item').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      updatePills();
+      if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
+    });
+    menu.appendChild(item);
+  });
+
+  selected.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.key-dropdown-menu.open').forEach(m => { if (m !== menu) m.classList.remove('open'); });
+    menu.classList.toggle('open');
+  });
+  document.addEventListener('click', e => {
+    if (!wrapper.contains(e.target)) menu.classList.remove('open');
+  });
 }
 
 function initTheme() {
@@ -839,26 +976,8 @@ function init() {
   initTheme();
   initAlphaFilter();
 
-  const majSel = document.getElementById('keyMajor');
-  NOTES.forEach(n => {
-    const k = n + ' Major';
-    const btn = document.createElement('div');
-    btn.className = 'key-btn';
-    btn.textContent = n;
-    btn.dataset.key = k;
-    btn.addEventListener('click', () => toggleKey(k, btn));
-    majSel.appendChild(btn);
-  });
-  const minSel = document.getElementById('keyMinor');
-  NOTES.forEach(n => {
-    const k = n + ' Minor';
-    const btn = document.createElement('div');
-    btn.className = 'key-btn';
-    btn.textContent = n;
-    btn.dataset.key = k;
-    btn.addEventListener('click', () => toggleKey(k, btn));
-    minSel.appendChild(btn);
-  });
+  initKeyDropdown('keyMajor', 'Major');
+  initKeyDropdown('keyMinor', 'Minor');
 
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
@@ -906,16 +1025,6 @@ function init() {
   });
 }
 
-function toggleKey(k, btn) {
-  if (selectedKeys.has(k)) {
-    selectedKeys.delete(k);
-    btn.classList.remove('active');
-  } else {
-    selectedKeys.add(k);
-    btn.classList.add('active');
-  }
-  updatePills();
-}
 
 function buildParams(pageNum) {
   const q = document.getElementById('search').value.trim();
@@ -938,7 +1047,7 @@ function buildParams(pageNum) {
   if (instMin) params.set('instMin', instMin);
   if (instMax) params.set('instMax', instMax);
   if (timeSig) params.set('timeSig', timeSig);
-  if (alphaFilter) params.set('alpha', alphaFilter);
+  if (alphaFilter) { params.set('alpha', alphaFilter); params.set('alphaField', alphaField); }
   params.set('sort', sortCol);
   params.set('dir', sortDir);
   params.set('page', pageNum);
@@ -1044,7 +1153,7 @@ function render(tracks) {
 
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
-    const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-';
+    const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(3) : '-';
     const keyStr = t.key ? esc(t.key) : '-';
     const popStr = t.popularity != null ? t.popularity : '-';
     const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
@@ -1081,7 +1190,7 @@ function render(tracks) {
     el.addEventListener('click', () => {
       document.getElementById('search').value = el.dataset.artist;
       selectedKeys.clear();
-      document.querySelectorAll('.key-btn.active').forEach(b => b.classList.remove('active'));
+      ['keyMajor', 'keyMinor'].forEach(p => { document.getElementById(p + 'Selected').textContent = 'ANY'; document.getElementById(p + 'Selected').classList.remove('has-value'); });
       document.getElementById('bpmMin').value = '';
       document.getElementById('bpmMax').value = '';
       updatePills();
@@ -1142,9 +1251,9 @@ function updatePills() {
     pill.innerHTML = esc(k) + ' <span class="remove">X</span>';
     pill.querySelector('.remove').addEventListener('click', () => {
       selectedKeys.delete(k);
-      const btn = document.querySelector('.key-btn[data-key="' + k + '"]');
-      if (btn) btn.classList.remove('active');
+      resetKeyDropdown(k);
       updatePills();
+      if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
     });
     pills.appendChild(pill);
   });
@@ -1286,7 +1395,7 @@ function renderPitchMatch(results, targetKey, targetBpm) {
           <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
           <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
           <td>${esc(t.title)}</td>
-          <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-'}</td>
+          <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(3) : '-'}</td>
           <td class="key-cell">${t.key ? esc(t.key) : '-'}</td>
         </tr>`;
       }
@@ -1314,7 +1423,7 @@ function renderPitchMatch(results, targetKey, targetBpm) {
     el.addEventListener('click', () => {
       document.getElementById('search').value = el.dataset.artist;
       selectedKeys.clear();
-      document.querySelectorAll('.key-btn.active').forEach(b => b.classList.remove('active'));
+      ['keyMajor', 'keyMinor'].forEach(p => { document.getElementById(p + 'Selected').textContent = 'ANY'; document.getElementById(p + 'Selected').classList.remove('has-value'); });
       document.getElementById('bpmMin').value = '';
       document.getElementById('bpmMax').value = '';
       updatePills();
