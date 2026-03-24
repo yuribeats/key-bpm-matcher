@@ -562,7 +562,10 @@ input[type="text"]:focus { border-color: var(--green); }
 
   <div class="filter-pills" id="filterPills"></div>
 
-  <div class="stats" id="stats"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="stats" id="stats"></div>
+    <div class="toggle-btn" id="exportBtn" style="display:none;font-size:10px;padding:4px 10px">EXPORT CSV</div>
+  </div>
 
   <table class="results-table">
     <thead>
@@ -1063,6 +1066,7 @@ function render(tracks) {
   });
   const countStr = totalResults === -1 ? (page * PER_PAGE + tracks.length) + '+' : totalResults.toLocaleString();
   stats.innerHTML = `<span>${countStr}</span> TRACKS`;
+  document.getElementById('exportBtn').style.display = tracks.length ? '' : 'none';
 
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
@@ -1384,6 +1388,25 @@ document.getElementById('termsLink').addEventListener('click', () => {
   const wasOpen = el.classList.contains('open');
   document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('open'));
   if (!wasOpen) { el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth' }); }
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if (!currentTracks.length) return;
+  const cols = ['artist','title','bpm','key','popularity','speechiness','instrumentalness','time_signature'];
+  const header = cols.join(',');
+  const rows = currentTracks.map(t => cols.map(c => {
+    let v = t[c];
+    if (v == null) return '';
+    if (typeof v === 'string') return '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  }).join(','));
+  const csv = header + '\n' + rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'everysong_export.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
 });
 </script>
 </body>
