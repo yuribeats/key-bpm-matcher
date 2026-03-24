@@ -626,6 +626,13 @@ function renderFavorites() {
 
 function render(tracks) {
   const stats = document.getElementById('stats');
+  const seen = new Set();
+  tracks = tracks.filter(t => {
+    const k = (t.artist + '|||' + t.title + '|||' + (t.key || '')).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   const countStr = totalResults === -1 ? (page * PER_PAGE + tracks.length) + '+' : totalResults.toLocaleString();
   stats.innerHTML = `<span>${countStr}</span> TRACKS`;
 
