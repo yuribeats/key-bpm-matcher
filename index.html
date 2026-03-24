@@ -167,6 +167,31 @@ input[type="text"]:focus { border-color: var(--green); }
 .tip-trigger:hover .tip-text { display: block; }
 .tip-trigger:hover { color: var(--green); border-color: var(--green); }
 
+.col-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--muted3);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--green);
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+  background: transparent;
+}
+.col-toggle.off { color: var(--muted4); border-color: var(--muted4); }
+.control-group.col-disabled .range-control,
+.control-group.col-disabled input[type="text"] { display: none; }
+.control-group.col-disabled label { color: var(--muted4); }
+
+.results-table.hide-pop th:nth-child(6), .results-table.hide-pop td:nth-child(6) { display: none; }
+.results-table.hide-speech th:nth-child(7), .results-table.hide-speech td:nth-child(7) { display: none; }
+.results-table.hide-inst th:nth-child(8), .results-table.hide-inst td:nth-child(8) { display: none; }
+.results-table.hide-ts th:nth-child(9), .results-table.hide-ts td:nth-child(9) { display: none; }
+
 .bpm-control {
   display: flex;
   align-items: center;
@@ -342,94 +367,6 @@ input[type="text"]:focus { border-color: var(--green); }
   font-size: 14px;
 }
 
-.dev-section {
-  margin-top: 60px;
-  border-top: 2px solid var(--border);
-  padding-top: 40px;
-}
-.dev-section h2 {
-  font-size: 20px;
-  font-weight: 300;
-  letter-spacing: 2px;
-  margin-bottom: 24px;
-}
-.dev-section h3 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--green);
-  margin-bottom: 8px;
-  margin-top: 24px;
-}
-.dev-form {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  margin-bottom: 16px;
-}
-.dev-form input[type="text"] { width: 280px; }
-.dev-result {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  padding: 16px;
-  margin-bottom: 24px;
-  display: none;
-  font-size: 12px;
-  font-weight: 300;
-}
-.dev-result .label { color: var(--muted2); font-size: 10px; margin-bottom: 2px; }
-.dev-result .value { color: var(--green); word-break: break-all; margin-bottom: 12px; font-family: monospace; text-transform: none; }
-.dev-result .value:last-child { margin-bottom: 0; }
-.dev-docs {
-  font-size: 12px;
-  font-weight: 300;
-  line-height: 1.8;
-  color: var(--fg);
-}
-.dev-docs code {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  padding: 2px 6px;
-  font-family: monospace;
-  font-size: 11px;
-  text-transform: none;
-}
-.dev-docs pre {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  padding: 12px;
-  overflow-x: auto;
-  font-family: monospace;
-  font-size: 11px;
-  text-transform: none;
-  line-height: 1.6;
-  margin: 8px 0;
-  color: var(--fg);
-}
-.dev-endpoint {
-  margin-bottom: 20px;
-}
-.dev-endpoint .method { color: var(--green); font-weight: 700; }
-.dev-param-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 8px 0;
-}
-.dev-param-table th {
-  text-align: left;
-  font-size: 10px;
-  font-weight: 300;
-  color: var(--muted);
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border2);
-}
-.dev-param-table td {
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border3);
-  font-weight: 300;
-  font-size: 11px;
-}
-.dev-param-table td:first-child { font-family: monospace; text-transform: none; color: var(--green); }
-
 .site-footer {
   margin-top: 60px;
   border-top: 1px solid var(--border);
@@ -569,8 +506,8 @@ input[type="text"]:focus { border-color: var(--green); }
   </div>
 
   <div class="filters-row">
-    <div class="control-group">
-      <label class="label-with-tip">POPULARITY <span class="tip-trigger">?<span class="tip-text">0-100. HIGHER = MORE STREAMS.</span></span></label>
+    <div class="control-group" data-col="pop">
+      <label class="label-with-tip"><span class="col-toggle" data-col="pop">X</span> POPULARITY <span class="tip-trigger">?<span class="tip-text">0-100. HIGHER = MORE STREAMS.</span></span></label>
       <div class="range-control">
         <input type="text" id="popMin" placeholder="MIN" value="">
         <span style="color:var(--muted4)">-</span>
@@ -578,15 +515,15 @@ input[type="text"]:focus { border-color: var(--green); }
       </div>
     </div>
 
-    <div class="control-group">
-      <label class="label-with-tip">SPEECHINESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. LOWER = MORE MUSIC. HIGHER = SPOKEN WORD.</span></span></label>
+    <div class="control-group" data-col="speech">
+      <label class="label-with-tip"><span class="col-toggle" data-col="speech">X</span> SPEECHINESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. LOWER = MORE MUSIC. HIGHER = SPOKEN WORD.</span></span></label>
       <div class="range-control">
         <input type="text" id="speechMax" placeholder="MAX" value="">
       </div>
     </div>
 
-    <div class="control-group">
-      <label class="label-with-tip">INSTRUMENTALNESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. HIGHER = NO VOCALS.</span></span></label>
+    <div class="control-group" data-col="inst">
+      <label class="label-with-tip"><span class="col-toggle" data-col="inst">X</span> INSTRUMENTALNESS <span class="tip-trigger">?<span class="tip-text">0.0-1.0. HIGHER = NO VOCALS.</span></span></label>
       <div class="range-control">
         <input type="text" id="instMin" placeholder="MIN" value="">
         <span style="color:var(--muted4)">-</span>
@@ -594,8 +531,8 @@ input[type="text"]:focus { border-color: var(--green); }
       </div>
     </div>
 
-    <div class="control-group">
-      <label class="label-with-tip">TIME SIG <span class="tip-trigger">?<span class="tip-text">3 = 3/4, 4 = 4/4, 5 = 5/4</span></span></label>
+    <div class="control-group" data-col="ts">
+      <label class="label-with-tip"><span class="col-toggle" data-col="ts">X</span> TIME SIG <span class="tip-trigger">?<span class="tip-text">3 = 3/4, 4 = 4/4, 5 = 5/4</span></span></label>
       <div class="range-control">
         <input type="text" id="timeSig" placeholder="ANY" value="">
       </div>
@@ -652,111 +589,6 @@ input[type="text"]:focus { border-color: var(--green); }
 
   <div class="empty-state" id="emptyState">SET YOUR CRITERIA AND CLICK SEARCH</div>
 
-  <div class="dev-section" id="devSection">
-    <h2>DEVELOPERS</h2>
-    <div class="dev-docs">254,380,247 TRACKS. KEY, BPM, POPULARITY, SPEECHINESS, INSTRUMENTALNESS, TIME SIGNATURE. FREE API ACCESS.</div>
-
-    <h3>GET YOUR API KEY</h3>
-    <div class="dev-form">
-      <div class="control-group">
-        <label>EMAIL</label>
-        <input type="text" id="devEmail" placeholder="YOUR@EMAIL.COM">
-      </div>
-      <div class="search-btn" id="devRegisterBtn">GET KEY</div>
-    </div>
-    <div class="dev-result" id="devResult">
-      <div class="label">API KEY</div>
-      <div class="value" id="devApiKey"></div>
-      <div class="label">API SECRET</div>
-      <div class="value" id="devApiSecret"></div>
-      <div class="label">RATE LIMIT</div>
-      <div class="value" id="devRateLimit"></div>
-    </div>
-
-    <h3>AUTHENTICATION</h3>
-    <div class="dev-docs">
-      PASS YOUR KEY AS AN <code>X-API-KEY</code> HEADER OR <code>api_key</code> QUERY PARAMETER.
-      <pre>curl -H "X-Api-Key: YOUR_KEY" https://key-bpm-matcher-2026-03-21.vercel.app/api/search?q=radiohead</pre>
-      <pre>curl "https://key-bpm-matcher-2026-03-21.vercel.app/api/search?q=radiohead&api_key=YOUR_KEY"</pre>
-    </div>
-
-    <h3>ENDPOINTS</h3>
-
-    <div class="dev-endpoint">
-      <div><span class="method">GET</span> <code>/api/search</code></div>
-      <table class="dev-param-table">
-        <thead><tr><th>PARAM</th><th>TYPE</th><th>DESCRIPTION</th></tr></thead>
-        <tbody>
-          <tr><td>q</td><td>STRING</td><td>FULL TEXT SEARCH (ARTIST OR TITLE)</td></tr>
-          <tr><td>key</td><td>STRING</td><td>KEY NAME, COMMA-SEPARATED. E.G. "C MAJOR" OR "Ab MINOR,C MAJOR"</td></tr>
-          <tr><td>bpmMin</td><td>NUMBER</td><td>MINIMUM BPM</td></tr>
-          <tr><td>bpmMax</td><td>NUMBER</td><td>MAXIMUM BPM</td></tr>
-          <tr><td>popMin</td><td>INT</td><td>MINIMUM POPULARITY (0-100)</td></tr>
-          <tr><td>popMax</td><td>INT</td><td>MAXIMUM POPULARITY (0-100)</td></tr>
-          <tr><td>speechMax</td><td>FLOAT</td><td>MAXIMUM SPEECHINESS (0.0-1.0)</td></tr>
-          <tr><td>instMin</td><td>FLOAT</td><td>MINIMUM INSTRUMENTALNESS (0.0-1.0)</td></tr>
-          <tr><td>instMax</td><td>FLOAT</td><td>MAXIMUM INSTRUMENTALNESS (0.0-1.0)</td></tr>
-          <tr><td>timeSig</td><td>INT</td><td>TIME SIGNATURE (3, 4, 5, ETC.)</td></tr>
-          <tr><td>alpha</td><td>STRING</td><td>FILTER BY FIRST LETTER. "A"-"Z", "0-9", OR "SYM"</td></tr>
-          <tr><td>sort</td><td>STRING</td><td>SORT BY: artist, title, bpm, key, popularity, speechiness, instrumentalness, time_signature</td></tr>
-          <tr><td>dir</td><td>STRING</td><td>asc OR desc</td></tr>
-          <tr><td>page</td><td>INT</td><td>PAGE NUMBER (0-BASED)</td></tr>
-          <tr><td>limit</td><td>INT</td><td>RESULTS PER PAGE (MAX 200)</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="dev-endpoint">
-      <div><span class="method">GET</span> <code>/api/pitch-match</code></div>
-      <div class="dev-docs" style="margin:8px 0">FIND TRACKS THAT CAN BE PITCH-SHIFTED TO MATCH A TARGET KEY AND BPM.</div>
-      <table class="dev-param-table">
-        <thead><tr><th>PARAM</th><th>TYPE</th><th>DESCRIPTION</th></tr></thead>
-        <tbody>
-          <tr><td>key</td><td>STRING</td><td>TARGET KEY. REQUIRED.</td></tr>
-          <tr><td>bpmMin</td><td>NUMBER</td><td>TARGET BPM MIN. REQUIRED (OR bpmMax).</td></tr>
-          <tr><td>bpmMax</td><td>NUMBER</td><td>TARGET BPM MAX.</td></tr>
-          <tr><td>range</td><td>INT</td><td>SEMITONE RANGE 1-10 (DEFAULT 3)</td></tr>
-          <tr><td>limit</td><td>INT</td><td>RESULTS PER SHIFT (MAX 50, DEFAULT 10)</td></tr>
-          <tr><td>q</td><td>STRING</td><td>FILTER BY TEXT</td></tr>
-          <tr><td>popMin</td><td>INT</td><td>MINIMUM POPULARITY</td></tr>
-          <tr><td>speechMax</td><td>FLOAT</td><td>MAXIMUM SPEECHINESS</td></tr>
-          <tr><td>instMin</td><td>FLOAT</td><td>MINIMUM INSTRUMENTALNESS</td></tr>
-          <tr><td>timeSig</td><td>INT</td><td>TIME SIGNATURE</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="dev-endpoint">
-      <div><span class="method">GET</span> <code>/api/key-info?api_key=YOUR_KEY</code></div>
-      <div class="dev-docs" style="margin:8px 0">CHECK YOUR KEY STATUS AND USAGE.</div>
-    </div>
-
-    <h3>RESPONSE FORMAT</h3>
-    <div class="dev-docs">
-      <pre>{
-  "total": 1234,
-  "tracks": [
-    {
-      "id": 1,
-      "artist": "RADIOHEAD",
-      "title": "EVERYTHING IN ITS RIGHT PLACE",
-      "bpm": 127.543,
-      "key": "Db Minor",
-      "popularity": 68,
-      "speechiness": 0.041,
-      "instrumentalness": 0.312,
-      "time_signature": 4
-    }
-  ],
-  "page": 0,
-  "limit": 100,
-  "hasMore": true
-}</pre>
-    </div>
-
-    <h3>RATE LIMITS</h3>
-    <div class="dev-docs">1,000 REQUESTS PER DAY. RESETS AT MIDNIGHT UTC.</div>
-  </div>
 
   <div class="legal-section" id="privacySection">
     <h2>PRIVACY POLICY</h2>
@@ -798,6 +630,7 @@ input[type="text"]:focus { border-color: var(--green); }
   </div>
 
   <div class="site-footer">
+    <a href="/developers.html">DEVELOPERS</a>
     <a id="privacyLink">PRIVACY</a>
     <a id="termsLink">TERMS</a>
   </div>
@@ -971,6 +804,36 @@ function initTheme() {
   });
 }
 
+let hiddenCols = new Set(JSON.parse(localStorage.getItem('kbm_hidden_cols') || '[]'));
+
+function initColumnToggles() {
+  const table = document.querySelector('.results-table');
+  hiddenCols.forEach(col => table.classList.add('hide-' + col));
+
+  document.querySelectorAll('.col-toggle').forEach(btn => {
+    const col = btn.dataset.col;
+    if (hiddenCols.has(col)) {
+      btn.classList.add('off');
+      btn.closest('.control-group').classList.add('col-disabled');
+    }
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (hiddenCols.has(col)) {
+        hiddenCols.delete(col);
+        btn.classList.remove('off');
+        btn.closest('.control-group').classList.remove('col-disabled');
+        table.classList.remove('hide-' + col);
+      } else {
+        hiddenCols.add(col);
+        btn.classList.add('off');
+        btn.closest('.control-group').classList.add('col-disabled');
+        table.classList.add('hide-' + col);
+      }
+      localStorage.setItem('kbm_hidden_cols', JSON.stringify([...hiddenCols]));
+    });
+  });
+}
+
 function init() {
   document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
   initTheme();
@@ -978,6 +841,7 @@ function init() {
 
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
+  initColumnToggles();
 
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
@@ -1456,37 +1320,6 @@ document.getElementById('relKeyToggle').addEventListener('click', () => {
 document.getElementById('pmRange').addEventListener('input', e => {
   document.getElementById('pmRangeVal').textContent = e.target.value;
   if (pmOpen) fetchPitchMatch();
-});
-
-document.getElementById('devRegisterBtn').addEventListener('click', async () => {
-  const email = document.getElementById('devEmail').value.trim();
-  if (!email || !email.includes('@') || !email.includes('.')) return;
-  const resultDiv = document.getElementById('devResult');
-  resultDiv.style.display = 'block';
-  document.getElementById('devApiKey').textContent = 'REGISTERING...';
-  document.getElementById('devApiSecret').textContent = '';
-  document.getElementById('devRateLimit').textContent = '';
-  try {
-    const resp = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const data = await resp.json();
-    if (data.error) {
-      document.getElementById('devApiKey').textContent = data.error;
-    } else {
-      document.getElementById('devApiKey').textContent = data.api_key;
-      document.getElementById('devApiSecret').textContent = data.api_secret;
-      document.getElementById('devRateLimit').textContent = data.rate_limit || '1000 REQUESTS/DAY';
-      if (data.message) document.getElementById('devRateLimit').textContent += ' — ' + data.message;
-    }
-  } catch {
-    document.getElementById('devApiKey').textContent = 'REGISTRATION FAILED';
-  }
-});
-document.getElementById('devEmail').addEventListener('keydown', e => {
-  if (e.key === 'Enter') document.getElementById('devRegisterBtn').click();
 });
 
 document.getElementById('privacyLink').addEventListener('click', () => {
