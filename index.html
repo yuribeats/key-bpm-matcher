@@ -62,9 +62,13 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
 
 .controls {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 20px;
+}
+.controls-row {
+  display: flex;
+  gap: 16px;
   align-items: flex-end;
 }
 
@@ -81,7 +85,7 @@ input[type="text"] {
   font-size: 13px;
   padding: 8px 12px;
   outline: none;
-  width: 200px;
+  width: 280px;
 }
 input[type="text"]:focus { border-color: var(--green); }
 
@@ -98,7 +102,7 @@ input[type="text"]:focus { border-color: var(--green); }
   text-transform: uppercase;
   font-size: 13px;
   padding: 8px 12px;
-  min-width: 120px;
+  min-width: 140px;
   cursor: default;
   user-select: none;
 }
@@ -184,7 +188,8 @@ input[type="text"]:focus { border-color: var(--green); }
 }
 .col-toggle.off { color: var(--muted4); border-color: var(--muted4); }
 .control-group.col-disabled .range-control,
-.control-group.col-disabled input[type="text"] { display: none; }
+.control-group.col-disabled input[type="text"],
+.control-group.col-disabled .alpha-filter { display: none; }
 .control-group.col-disabled label { color: var(--muted4); }
 
 .results-table.hide-pop th:nth-child(6), .results-table.hide-pop td:nth-child(6) { display: none; }
@@ -197,14 +202,14 @@ input[type="text"]:focus { border-color: var(--green); }
   align-items: center;
   gap: 8px;
 }
-.bpm-control input[type="text"] { width: 60px; text-align: center; }
+.bpm-control input[type="text"] { width: 80px; text-align: center; }
 
 .range-control {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.range-control input[type="text"] { width: 50px; text-align: center; }
+.range-control input[type="text"] { width: 70px; text-align: center; }
 
 .search-btn {
   background: var(--green);
@@ -474,6 +479,10 @@ input[type="text"]:focus { border-color: var(--green); }
     gap: 12px;
     align-items: stretch;
   }
+  .controls-row {
+    flex-direction: column;
+    gap: 12px;
+  }
   .controls .control-group { width: 100%; }
   .controls input[type="text"] { width: 100%; }
   .controls .key-dropdown { width: 100%; }
@@ -541,51 +550,50 @@ input[type="text"]:focus { border-color: var(--green); }
   </div>
 
   <div class="controls">
-    <div class="control-group">
-      <label>ARTIST</label>
-      <input type="text" id="searchArtist" placeholder="ARTIST">
-    </div>
-    <div class="control-group">
-      <label>TITLE</label>
-      <input type="text" id="searchTitle" placeholder="TITLE">
-    </div>
-
-    <div class="control-group">
-      <label>KEY (MAJOR)</label>
-      <div class="key-dropdown" id="keyMajorDropdown">
-        <div class="key-dropdown-selected" id="keyMajorSelected">ANY</div>
-        <div class="key-dropdown-menu" id="keyMajorMenu"></div>
+    <div class="controls-row">
+      <div class="control-group">
+        <label>ARTIST</label>
+        <input type="text" id="searchArtist" placeholder="ARTIST">
       </div>
-    </div>
-    <div class="control-group">
-      <label>KEY (MINOR)</label>
-      <div class="key-dropdown" id="keyMinorDropdown">
-        <div class="key-dropdown-selected" id="keyMinorSelected">ANY</div>
-        <div class="key-dropdown-menu" id="keyMinorMenu"></div>
+      <div class="control-group">
+        <label>TITLE</label>
+        <input type="text" id="searchTitle" placeholder="TITLE">
       </div>
     </div>
 
-    <div class="control-group">
-      <label>BPM RANGE</label>
-      <div class="bpm-control">
-        <input type="text" id="bpmMin" placeholder="MIN" value="">
-        <span style="color:#333">-</span>
-        <input type="text" id="bpmMax" placeholder="MAX" value="">
+    <div class="controls-row">
+      <div class="control-group">
+        <label>KEY (MAJOR)</label>
+        <div class="key-dropdown" id="keyMajorDropdown">
+          <div class="key-dropdown-selected" id="keyMajorSelected">ANY</div>
+          <div class="key-dropdown-menu" id="keyMajorMenu"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>KEY (MINOR)</label>
+        <div class="key-dropdown" id="keyMinorDropdown">
+          <div class="key-dropdown-selected" id="keyMinorSelected">ANY</div>
+          <div class="key-dropdown-menu" id="keyMinorMenu"></div>
+        </div>
+      </div>
+      <div class="control-group">
+        <label>BPM RANGE</label>
+        <div class="bpm-control">
+          <input type="text" id="bpmMin" placeholder="MIN" value="">
+          <span style="color:#333">-</span>
+          <input type="text" id="bpmMax" placeholder="MAX" value="">
+        </div>
+      </div>
+      <div class="control-group">
+        <label>BPM DECIMALS</label>
+        <div class="alpha-filter" id="bpmDecFilter">
+          <div class="alpha-selected" id="bpmDecSelected">3</div>
+          <div class="alpha-dropdown" id="bpmDecDropdown"></div>
+        </div>
       </div>
     </div>
 
-    <div class="control-group">
-      <label>BPM DECIMALS</label>
-      <div class="alpha-filter" id="bpmDecFilter">
-        <div class="alpha-selected" id="bpmDecSelected">3</div>
-        <div class="alpha-dropdown" id="bpmDecDropdown"></div>
-      </div>
-    </div>
-
-    <div class="control-group">
-      <label>&nbsp;</label>
-      <div class="search-btn" id="searchBtn">SEARCH</div>
-    </div>
+    <div class="search-btn" id="searchBtn">SEARCH</div>
   </div>
 
   <div class="filters-row">
