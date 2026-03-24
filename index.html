@@ -1280,11 +1280,12 @@ async function fetchPitchMatch() {
         if (rel && !searchKeys.includes(rel)) searchKeys.push(rel);
       });
     }
+    const bpmPad = Math.pow(10, -bpmDecimals) / 2;
     const fetches = searchKeys.map(key => {
       const params = new URLSearchParams();
       params.set('key', key);
-      if (bpmMin) params.set('bpmMin', bpmMin);
-      if (bpmMax) params.set('bpmMax', bpmMax);
+      if (bpmMin) params.set('bpmMin', (parseFloat(bpmMin) - bpmPad).toFixed(3));
+      if (bpmMax) params.set('bpmMax', (parseFloat(bpmMax) + bpmPad).toFixed(3));
       params.set('range', range);
       params.set('limit', '10');
       if (q) params.set('q', q);
@@ -1323,8 +1324,8 @@ function renderPitchMatch(results, targetKey, targetBpm) {
     });
     const dir = group.shift > 0 ? '+' : '';
     const bpmRange = group.sourceBpmMin === group.sourceBpmMax
-      ? group.sourceBpmMin.toFixed(1)
-      : group.sourceBpmMin.toFixed(1) + '-' + group.sourceBpmMax.toFixed(1);
+      ? group.sourceBpmMin.toFixed(bpmDecimals)
+      : group.sourceBpmMin.toFixed(bpmDecimals) + '-' + group.sourceBpmMax.toFixed(bpmDecimals);
 
     html += '<div class="pm-group">';
     html += `<div class="pm-group-header">
@@ -1332,7 +1333,7 @@ function renderPitchMatch(results, targetKey, targetBpm) {
       <span class="arrow">&mdash;</span>
       ${esc(group.sourceKey)} @ ${bpmRange} BPM
       <span class="arrow">&rarr;</span>
-      <span class="target-label">${esc(targetKey)} @ ${parseFloat(targetBpm).toFixed(1)} BPM</span>
+      <span class="target-label">${esc(targetKey)} @ ${parseFloat(targetBpm).toFixed(bpmDecimals)} BPM</span>
       <span style="color:#666;font-size:10px;margin-left:8px">(${group.tracks.length} TRACK${group.tracks.length !== 1 ? 'S' : ''})</span>
     </div>`;
 
@@ -1437,7 +1438,16 @@ document.getElementById('exportBtn').addEventListener('click', () => {
   const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'everysong_export.csv';
+  const parts = ['everysong'];
+  const a1 = document.getElementById('searchArtist').value.trim();
+  const t1 = document.getElementById('searchTitle').value.trim();
+  if (a1) parts.push(a1.replace(/[^a-zA-Z0-9]/g, '_'));
+  if (t1) parts.push(t1.replace(/[^a-zA-Z0-9]/g, '_'));
+  if (selectedKeys.size) parts.push(Array.from(selectedKeys).join('_').replace(/\s/g, ''));
+  const b1 = document.getElementById('bpmMin').value.trim();
+  const b2 = document.getElementById('bpmMax').value.trim();
+  if (b1 || b2) parts.push((b1 || '0') + '-' + (b2 || 'max') + 'bpm');
+  a.download = parts.join('_') + '.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 });
