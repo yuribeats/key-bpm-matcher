@@ -457,6 +457,67 @@ input[type="text"]:focus { border-color: var(--green); }
 }
 .alpha-option:hover { background: var(--green); color: #000; }
 .alpha-option.active { color: var(--green); }
+
+@media (max-width: 768px) {
+  .container { padding: 12px; }
+  h1 { font-size: 20px; margin-bottom: 12px; }
+
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .header-row > div { flex-wrap: wrap; }
+
+  .controls {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .controls .control-group { width: 100%; }
+  .controls input[type="text"] { width: 100%; }
+  .controls .key-dropdown { width: 100%; }
+  .controls .key-dropdown-selected { width: 100%; }
+  .controls .key-dropdown-menu { width: 100%; }
+  .controls .bpm-control { width: 100%; }
+  .controls .bpm-control input[type="text"] { flex: 1; width: auto; }
+  .controls .search-btn { width: 100%; text-align: center; }
+  .controls .alpha-filter { width: 100%; }
+  .controls .alpha-selected { width: 100%; }
+
+  .filters-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .filters-row .control-group { width: 100%; }
+  .filters-row .range-control { width: 100%; }
+  .filters-row .range-control input[type="text"] { flex: 1; width: auto; }
+  .filters-row .alpha-filter { width: 100%; }
+  .filters-row .alpha-selected { width: 100%; }
+  .filters-row > .control-group > div { width: 100%; }
+  .filters-row .toggle-btn { flex-shrink: 0; }
+
+  .results-table { font-size: 11px; }
+  .results-table th { padding: 6px 4px; font-size: 9px; }
+  .results-table td { padding: 6px 4px; font-size: 11px; }
+  .results-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .results-table thead, .results-table tbody { min-width: 600px; display: table; width: 100%; }
+
+  .pm-group-header { font-size: 10px; }
+  .pm-table td { padding: 4px; font-size: 11px; }
+
+  .pagination { flex-wrap: wrap; }
+
+  .filter-pills { gap: 4px; }
+  .filter-pill { font-size: 10px; padding: 3px 8px; }
+
+  .legal-section p { font-size: 11px; }
+  .legal-section h2 { font-size: 16px; }
+
+  .alpha-dropdown { min-width: 100%; }
+  .key-dropdown-menu { min-width: 100%; }
+}
 </style>
 </head>
 <body>
@@ -466,9 +527,16 @@ input[type="text"]:focus { border-color: var(--green); }
     <div style="display:flex;gap:8px;align-items:center">
       <div class="toggle-btn" id="themeToggle">LIGHT</div>
       <div class="toggle-btn" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
-      <a href="/manual.html" class="toggle-btn">MANUAL</a>
-      <a href="/developers.html" class="toggle-btn">DEVELOPERS</a>
-      <a href="https://slowedandreverbed.com" class="toggle-btn">SLOWEDANDREVERBED.COM</a>
+      <div class="alpha-filter" id="menuFilter">
+        <div class="alpha-selected" id="menuSelected">MENU</div>
+        <div class="alpha-dropdown" id="menuDropdown" style="right:0;left:auto">
+          <a href="/manual.html" class="alpha-option">MANUAL</a>
+          <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
+          <div class="alpha-option" id="menuPrivacy">PRIVACY</div>
+          <div class="alpha-option" id="menuTerms">TERMS</div>
+          <a href="https://slowedandreverbed.com" class="alpha-option">SLOWEDANDREVERBED.COM</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -650,10 +718,6 @@ input[type="text"]:focus { border-color: var(--green); }
     <p>We may update these terms. Continued use of the service after changes constitutes acceptance.</p>
   </div>
 
-  <div class="site-footer">
-    <a id="privacyLink">PRIVACY</a>
-    <a id="termsLink">TERMS</a>
-  </div>
 </div>
 
 <script>
@@ -1412,13 +1476,21 @@ document.getElementById('pmRange').addEventListener('input', e => {
   if (pmOpen) fetchPitchMatch();
 });
 
-document.getElementById('privacyLink').addEventListener('click', () => {
+document.getElementById('menuSelected').addEventListener('click', () => {
+  document.getElementById('menuDropdown').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!document.getElementById('menuFilter').contains(e.target)) document.getElementById('menuDropdown').classList.remove('open');
+});
+document.getElementById('menuPrivacy').addEventListener('click', () => {
+  document.getElementById('menuDropdown').classList.remove('open');
   const el = document.getElementById('privacySection');
   const wasOpen = el.classList.contains('open');
   document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('open'));
   if (!wasOpen) { el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth' }); }
 });
-document.getElementById('termsLink').addEventListener('click', () => {
+document.getElementById('menuTerms').addEventListener('click', () => {
+  document.getElementById('menuDropdown').classList.remove('open');
   const el = document.getElementById('termsSection');
   const wasOpen = el.classList.contains('open');
   document.querySelectorAll('.legal-section').forEach(s => s.classList.remove('open'));
