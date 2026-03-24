@@ -28,10 +28,10 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
   margin-bottom: 20px;
 }
 
-.hq-toggle {
+.toggle-btn {
   background: #111;
-  border: 2px solid #E89030;
-  color: #E89030;
+  border: 2px solid #333;
+  color: #fff;
   font-family: Arial, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -40,27 +40,9 @@ h1 { font-size: 28px; font-weight: 300; letter-spacing: 2px; margin-bottom: 20px
   cursor: default;
   user-select: none;
 }
-.hq-toggle.active {
-  background: #E89030;
-  border-color: #E89030;
-  color: #000;
-}
-
-.fav-toggle {
-  background: #111;
-  border: 2px solid #E89030;
-  color: #E89030;
-  font-family: Arial, sans-serif;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 11px;
-  padding: 8px 16px;
-  cursor: default;
-  user-select: none;
-}
-.fav-toggle.active {
-  background: #E89030;
-  border-color: #E89030;
+.toggle-btn.active {
+  background: #228B22;
+  border-color: #228B22;
   color: #000;
 }
 
@@ -119,6 +101,13 @@ input[type="text"]:focus { border-color: #228B22; }
 }
 .bpm-control input[type="text"] { width: 60px; text-align: center; }
 
+.range-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.range-control input[type="text"] { width: 50px; text-align: center; }
+
 .search-btn {
   background: #228B22;
   border: 1px solid #228B22;
@@ -167,6 +156,8 @@ input[type="text"]:focus { border-color: #228B22; }
 
 .key-cell { color: #228B22; font-weight: 700; }
 .bpm-cell { font-variant-numeric: tabular-nums; }
+.pop-cell { font-variant-numeric: tabular-nums; color: #888; }
+.ts-cell { color: #666; }
 .no-data { color: #333; }
 .artist-link { color: #228B22; }
 
@@ -223,25 +214,6 @@ input[type="text"]:focus { border-color: #228B22; }
   cursor: default;
 }
 
-.legend {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-  font-size: 10px;
-  font-weight: 300;
-  color: #666;
-}
-.legend-item { display: flex; align-items: center; gap: 4px; }
-
-.source-dot {
-  width: 8px;
-  height: 8px;
-  display: inline-block;
-}
-.source-bpm { background: #444; }
-.source-key { background: #228B22; }
-.source-both { background: #fff; }
-
 .pm-btn {
   background: #111;
   border: 2px solid #228B22;
@@ -296,6 +268,14 @@ input[type="text"]:focus { border-color: #228B22; }
   font-weight: 300;
   font-size: 14px;
 }
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+}
 </style>
 </head>
 <body>
@@ -303,8 +283,7 @@ input[type="text"]:focus { border-color: #228B22; }
   <div class="header-row">
     <h1>KEY + BPM MATCHER</h1>
     <div style="display:flex;gap:8px;align-items:center">
-      <div class="hq-toggle" id="hqToggle">HIGH CONFIDENCE</div>
-      <div class="fav-toggle" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
+      <div class="toggle-btn" id="favToggle">FAVORITES (<span id="favCount">0</span>)</div>
     </div>
   </div>
 
@@ -338,6 +317,38 @@ input[type="text"]:focus { border-color: #228B22; }
     </div>
   </div>
 
+  <div class="filters-row">
+    <div class="control-group">
+      <label>POPULARITY MIN</label>
+      <div class="range-control">
+        <input type="text" id="popMin" placeholder="0" value="">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>SPEECHINESS MAX</label>
+      <div class="range-control">
+        <input type="text" id="speechMax" placeholder="1.0" value="">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>INSTRUMENTALNESS</label>
+      <div class="range-control">
+        <input type="text" id="instMin" placeholder="MIN" value="">
+        <span style="color:#333">-</span>
+        <input type="text" id="instMax" placeholder="MAX" value="">
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>TIME SIG</label>
+      <div class="range-control">
+        <input type="text" id="timeSig" placeholder="ANY" value="">
+      </div>
+    </div>
+  </div>
+
   <div class="filter-pills" id="filterPills"></div>
 
   <div class="stats" id="stats"></div>
@@ -350,6 +361,8 @@ input[type="text"]:focus { border-color: #228B22; }
         <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="key">KEY <span class="sort-arrow"></span></th>
+        <th class="sortable" data-sort="popularity">POP <span class="sort-arrow"></span></th>
+        <th>TS</th>
       </tr>
     </thead>
     <tbody id="results"></tbody>
@@ -382,7 +395,6 @@ let totalResults = 0;
 let hasMoreResults = false;
 let selectedKeys = new Set();
 let showingFavorites = false;
-let hqOnly = false;
 let currentTracks = [];
 let hasSearched = false;
 let prefetchCache = {};
@@ -405,7 +417,7 @@ function toggleFavorite(track) {
   if (favs[key]) {
     delete favs[key];
   } else {
-    favs[key] = { artist: track.artist, title: track.title, bpm: track.bpm, key: track.key };
+    favs[key] = { artist: track.artist, title: track.title, bpm: track.bpm, key: track.key, popularity: track.popularity, time_signature: track.time_signature };
   }
   saveFavorites(favs);
   if (showingFavorites) {
@@ -473,12 +485,6 @@ function init() {
     }
   });
 
-  document.getElementById('hqToggle').addEventListener('click', () => {
-    hqOnly = !hqOnly;
-    document.getElementById('hqToggle').classList.toggle('active', hqOnly);
-    if (hasSearched) { page = 0; prefetchCache = {}; fetchTracks(); }
-  });
-
   document.getElementById('favToggle').addEventListener('click', () => {
     showingFavorites = !showingFavorites;
     document.getElementById('favToggle').classList.toggle('active', showingFavorites);
@@ -511,12 +517,21 @@ function buildParams(pageNum) {
   const q = document.getElementById('search').value.trim();
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
+  const popMin = document.getElementById('popMin').value.trim();
+  const speechMax = document.getElementById('speechMax').value.trim();
+  const instMin = document.getElementById('instMin').value.trim();
+  const instMax = document.getElementById('instMax').value.trim();
+  const timeSig = document.getElementById('timeSig').value.trim();
   const params = new URLSearchParams();
   if (q) params.set('q', q);
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
-  if (hqOnly) params.set('hq', '1');
+  if (popMin) params.set('popMin', popMin);
+  if (speechMax) params.set('speechMax', speechMax);
+  if (instMin) params.set('instMin', instMin);
+  if (instMax) params.set('instMax', instMax);
+  if (timeSig) params.set('timeSig', timeSig);
   params.set('sort', sortCol);
   params.set('dir', sortDir);
   params.set('page', pageNum);
@@ -537,7 +552,7 @@ async function fetchTracks() {
   const params = buildParams(page);
   const baseKey = params.toString().replace(/&?page=\d+/, '');
 
-  if (!params.get('q') && !params.get('key') && !params.get('bpmMin') && !params.get('bpmMax')) {
+  if (!params.get('q') && !params.get('key') && !params.get('bpmMin') && !params.get('bpmMax') && !params.get('popMin')) {
     document.getElementById('stats').innerHTML = 'ENTER A SEARCH TERM, SELECT A KEY, OR SET A BPM RANGE';
     document.getElementById('results').innerHTML = '';
     document.getElementById('pagination').innerHTML = '';
@@ -586,7 +601,7 @@ function renderFavorites() {
   const bpmMax = parseFloat(document.getElementById('bpmMax').value) || 999;
 
   let tracks = Object.values(favs).map(f => ({
-    artist: f.artist, title: f.title, bpm: f.bpm, key: f.key
+    artist: f.artist, title: f.title, bpm: f.bpm, key: f.key, popularity: f.popularity, time_signature: f.time_signature
   }));
 
   if (q) tracks = tracks.filter(t => t.artist.toLowerCase().includes(q) || t.title.toLowerCase().includes(q));
@@ -617,13 +632,17 @@ function render(tracks) {
   tbody.innerHTML = tracks.map(t => {
     const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-';
     const keyStr = t.key ? esc(t.key) : '-';
+    const popStr = t.popularity != null ? t.popularity : '-';
+    const tsStr = t.time_signature != null ? t.time_signature + '/4' : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
-      <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}">${favClass ? '\u2605' : '\u2606'}</span></td>
+      <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
       <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
       <td>${esc(t.title)}</td>
       <td class="bpm-cell">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
+      <td class="pop-cell">${popStr}</td>
+      <td class="ts-cell">${tsStr}</td>
     </tr>`;
   }).join('');
 
@@ -633,7 +652,9 @@ function render(tracks) {
         artist: el.dataset.artist,
         title: el.dataset.title,
         bpm: el.dataset.bpm ? parseFloat(el.dataset.bpm) : null,
-        key: el.dataset.key || null
+        key: el.dataset.key || null,
+        popularity: el.dataset.pop ? parseInt(el.dataset.pop) : null,
+        time_signature: el.dataset.ts ? parseInt(el.dataset.ts) : null
       });
     });
   });
@@ -751,6 +772,9 @@ async function fetchPitchMatch() {
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const range = document.getElementById('pmRange').value;
   const q = document.getElementById('search').value.trim();
+  const popMin = document.getElementById('popMin').value.trim();
+  const speechMax = document.getElementById('speechMax').value.trim();
+  const instMin = document.getElementById('instMin').value.trim();
 
   document.getElementById('pmResults').innerHTML = '<div style="color:#666;font-size:11px;font-weight:300">SEARCHING PITCH MATCHES...</div>';
 
@@ -762,8 +786,10 @@ async function fetchPitchMatch() {
       if (bpmMax) params.set('bpmMax', bpmMax);
       params.set('range', range);
       params.set('limit', '10');
-      if (hqOnly) params.set('hq', '1');
       if (q) params.set('q', q);
+      if (popMin) params.set('popMin', popMin);
+      if (speechMax) params.set('speechMax', speechMax);
+      if (instMin) params.set('instMin', instMin);
       return fetch('/api/pitch-match?' + params.toString()).then(r => r.json());
     });
     const responses = await Promise.all(fetches);
@@ -810,7 +836,7 @@ function renderPitchMatch(results, targetKey, targetBpm) {
       for (const t of group.tracks) {
         const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
         html += `<tr>
-          <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}">${favClass ? '\u2605' : '\u2606'}</span></td>
+          <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
           <td class="artist-link" data-artist="${escAttr(t.artist)}">${esc(t.artist)}</td>
           <td>${esc(t.title)}</td>
           <td class="bpm-cell">${t.bpm != null ? parseFloat(t.bpm).toFixed(1) : '-'}</td>
@@ -830,7 +856,9 @@ function renderPitchMatch(results, targetKey, targetBpm) {
         artist: el.dataset.artist,
         title: el.dataset.title,
         bpm: el.dataset.bpm ? parseFloat(el.dataset.bpm) : null,
-        key: el.dataset.key || null
+        key: el.dataset.key || null,
+        popularity: el.dataset.pop ? parseInt(el.dataset.pop) : null,
+        time_signature: el.dataset.ts ? parseInt(el.dataset.ts) : null
       });
     });
   });
