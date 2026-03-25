@@ -557,6 +557,7 @@ input[type="text"]:focus { border-color: var(--green); }
   <div class="header-row">
     <h1>EVERY SONG</h1>
     <div style="display:flex;gap:8px;align-items:center">
+      <div class="toggle-btn" id="keyModeToggle">CAMELOT</div>
       <div class="alpha-filter" id="menuFilter">
         <div class="alpha-selected" id="menuSelected">MENU</div>
         <div class="alpha-dropdown" id="menuDropdown" style="right:0;left:auto;white-space:nowrap">
@@ -590,14 +591,14 @@ input[type="text"]:focus { border-color: var(--green); }
 
     <div class="controls-row">
       <div class="control-group">
-        <label>KEY (MAJOR)</label>
+        <label id="keyMajorLabel">KEY (MAJOR)</label>
         <div class="key-dropdown" id="keyMajorDropdown">
           <div class="key-dropdown-selected" id="keyMajorSelected">ANY</div>
           <div class="key-dropdown-menu" id="keyMajorMenu"></div>
         </div>
       </div>
       <div class="control-group">
-        <label>KEY (MINOR)</label>
+        <label id="keyMinorLabel">KEY (MINOR)</label>
         <div class="key-dropdown" id="keyMinorDropdown">
           <div class="key-dropdown-selected" id="keyMinorSelected">ANY</div>
           <div class="key-dropdown-menu" id="keyMinorMenu"></div>
@@ -722,6 +723,7 @@ input[type="text"]:focus { border-color: var(--green); }
 
 <script>
 const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+let keyDisplay = localStorage.getItem('kbm_key_display') || 'written';
 
 const CAMELOT_MAP = {
   'B Major': '1B',   'Ab Minor': '1A',  'G# Minor': '1A',
@@ -912,12 +914,13 @@ function initKeyDropdown(prefix, mode) {
     const item = document.createElement('div');
     item.className = 'key-dropdown-item';
     item.dataset.key = k;
-    const code = camelotCode(k);
-    item.textContent = code ? code + '  ' + n : n;
+    item.dataset.note = n;
+    item.dataset.code = camelotCode(k) || '';
+    item.textContent = keyDisplay === 'camelot' ? (item.dataset.code || n) : n;
     item.addEventListener('click', () => {
       NOTES.forEach(nn => selectedKeys.delete(nn + ' ' + mode));
       selectedKeys.add(k);
-      selected.textContent = n;
+      selected.textContent = keyDisplay === 'camelot' ? (camelotCode(k) || n) : n;
       selected.classList.add('has-value');
       menu.classList.remove('open');
       menu.querySelectorAll('.key-dropdown-item').forEach(i => i.classList.remove('active'));
@@ -936,6 +939,27 @@ function initKeyDropdown(prefix, mode) {
   document.addEventListener('click', e => {
     if (!wrapper.contains(e.target)) menu.classList.remove('open');
   });
+}
+
+function applyKeyDisplay() {
+  const isCamelot = keyDisplay === 'camelot';
+  document.getElementById('keyModeToggle').classList.toggle('active', isCamelot);
+  document.getElementById('keyMajorLabel').textContent = isCamelot ? 'KEY (B)' : 'KEY (MAJOR)';
+  document.getElementById('keyMinorLabel').textContent = isCamelot ? 'KEY (A)' : 'KEY (MINOR)';
+  ['keyMajor', 'keyMinor'].forEach(prefix => {
+    const mode = prefix === 'keyMajor' ? 'Major' : 'Minor';
+    const menu = document.getElementById(prefix + 'Menu');
+    const sel = document.getElementById(prefix + 'Selected');
+    menu.querySelectorAll('.key-dropdown-item[data-key]').forEach(item => {
+      item.textContent = isCamelot ? (item.dataset.code || item.dataset.note) : item.dataset.note;
+    });
+    if (sel.classList.contains('has-value')) {
+      const activeItem = menu.querySelector('.key-dropdown-item.active[data-key]');
+      if (activeItem) sel.textContent = isCamelot ? (activeItem.dataset.code || activeItem.dataset.note) : activeItem.dataset.note;
+    }
+  });
+  if (hasSearched) render(currentTracks);
+  updatePills();
 }
 
 function initTheme() {
@@ -1209,8 +1233,9 @@ function render(tracks) {
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
     const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(bpmDecimals) : '-';
-    const code = t.key ? camelotCode(t.key) : '';
-    const keyStr = t.key ? esc(t.key) + (code ? ' <span style="font-size:10px;font-weight:300;color:var(--muted)">' + code + '</span>' : '') : '-';
+    const keyStr = t.key
+      ? (keyDisplay === 'camelot' ? (camelotCode(t.key) || esc(t.key)) : esc(t.key))
+      : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
       <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
@@ -1329,7 +1354,8 @@ function updatePills() {
   selectedKeys.forEach(k => {
     const pill = document.createElement('div');
     pill.className = 'filter-pill';
-    pill.innerHTML = esc(k) + ' <span class="remove">X</span>';
+    const pillLabel = keyDisplay === 'camelot' ? (camelotCode(k) || esc(k)) : esc(k);
+    pill.innerHTML = pillLabel + ' <span class="remove">X</span>';
     pill.querySelector('.remove').addEventListener('click', () => {
       selectedKeys.delete(k);
       resetKeyDropdown(k);
@@ -1445,7 +1471,8 @@ async function fetchPitchMatch() {
     responses.forEach((data, i) => {
       if (data.results) allResults = allResults.concat(data.results);
     });
-    renderPitchMatch(allResults, searchKeys.join(' + '), bpmMin || bpmMax, searchKeys);
+    const targetDisplay = searchKeys.map(k => keyDisplay === 'camelot' ? (camelotCode(k) || k) : k).join(' + ');
+    renderPitchMatch(allResults, targetDisplay, bpmMin || bpmMax, searchKeys);
   } catch {
     document.getElementById('pmResults').innerHTML = '<div style="color:red;font-size:11px">PITCH MATCH FAILED</div>';
   }
@@ -1482,11 +1509,11 @@ function renderPitchMatch(results, targetKey, targetBpm, targetKeys) {
 
     html += '<div class="pm-group">';
     const srcCode = camelotCode(group.sourceKey);
-    const srcCodeStr = srcCode ? ` <span style="color:var(--green);font-size:10px">${srcCode}</span>` : '';
+    const srcDisplay = keyDisplay === 'camelot' ? (srcCode || esc(group.sourceKey)) : esc(group.sourceKey);
     html += `<div class="pm-group-header">
       <span class="shift-label">${dir}${group.shift} SEMITONE${Math.abs(group.shift) > 1 ? 'S' : ''}</span>
       <span class="arrow">&mdash;</span>
-      ${esc(group.sourceKey)}${srcCodeStr} @ ${bpmRange} BPM
+      ${srcDisplay} @ ${bpmRange} BPM
       <span class="arrow">&rarr;</span>
       <span class="target-label">${esc(targetKey)} @ ${parseFloat(targetBpm).toFixed(bpmDecimals)} BPM</span>
       <span style="color:#666;font-size:10px;margin-left:8px">(${group.tracks.length} TRACK${group.tracks.length !== 1 ? 'S' : ''})</span>
@@ -1572,6 +1599,13 @@ document.getElementById('pmRange').addEventListener('input', e => {
   document.getElementById('pmRangeVal').textContent = e.target.value;
   if (pmOpen) fetchPitchMatch();
 });
+
+document.getElementById('keyModeToggle').addEventListener('click', () => {
+  keyDisplay = keyDisplay === 'written' ? 'camelot' : 'written';
+  localStorage.setItem('kbm_key_display', keyDisplay);
+  applyKeyDisplay();
+});
+applyKeyDisplay();
 
 document.getElementById('menuSelected').addEventListener('click', () => {
   document.getElementById('menuDropdown').classList.toggle('open');

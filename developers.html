@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DEVELOPERS - EVERY SONG</title>
-<meta name="description" content="Free API access to 254 million tracks. Search by key, BPM, popularity, speechiness, instrumentalness, and time signature.">
+<meta name="description" content="Free API access to 254 million tracks. Search by key, BPM, artist, and title.">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
 <style>
 :root {
@@ -246,15 +246,9 @@ input[type="text"]:focus { border-color: var(--green); }
         <tr><td>key</td><td>STRING</td><td>KEY NAME, COMMA-SEPARATED. E.G. "C MAJOR" OR "Ab MINOR,C MAJOR"</td></tr>
         <tr><td>bpmMin</td><td>NUMBER</td><td>MINIMUM BPM</td></tr>
         <tr><td>bpmMax</td><td>NUMBER</td><td>MAXIMUM BPM</td></tr>
-        <tr><td>popMin</td><td>INT</td><td>MINIMUM POPULARITY (0-100)</td></tr>
-        <tr><td>popMax</td><td>INT</td><td>MAXIMUM POPULARITY (0-100)</td></tr>
-        <tr><td>speechMax</td><td>FLOAT</td><td>MAXIMUM SPEECHINESS (0.0-1.0)</td></tr>
-        <tr><td>instMin</td><td>FLOAT</td><td>MINIMUM INSTRUMENTALNESS (0.0-1.0)</td></tr>
-        <tr><td>instMax</td><td>FLOAT</td><td>MAXIMUM INSTRUMENTALNESS (0.0-1.0)</td></tr>
-        <tr><td>timeSig</td><td>INT</td><td>TIME SIGNATURE (3, 4, 5, ETC.)</td></tr>
         <tr><td>alpha</td><td>STRING</td><td>FILTER BY FIRST LETTER. "A"-"Z", "0-9", OR "SYM"</td></tr>
         <tr><td>alphaField</td><td>STRING</td><td>WHICH FIELD TO FILTER: "artist" (DEFAULT) OR "title"</td></tr>
-        <tr><td>sort</td><td>STRING</td><td>SORT BY: artist, title, bpm, key, popularity, speechiness, instrumentalness, time_signature</td></tr>
+        <tr><td>sort</td><td>STRING</td><td>SORT BY: artist, title, bpm, key</td></tr>
         <tr><td>dir</td><td>STRING</td><td>asc OR desc</td></tr>
         <tr><td>page</td><td>INT</td><td>PAGE NUMBER (0-BASED)</td></tr>
         <tr><td>limit</td><td>INT</td><td>RESULTS PER PAGE (MAX 200)</td></tr>
@@ -274,10 +268,6 @@ input[type="text"]:focus { border-color: var(--green); }
         <tr><td>range</td><td>INT</td><td>SEMITONE RANGE 1-10 (DEFAULT 3)</td></tr>
         <tr><td>limit</td><td>INT</td><td>RESULTS PER SHIFT (MAX 50, DEFAULT 10)</td></tr>
         <tr><td>q</td><td>STRING</td><td>FILTER BY TEXT</td></tr>
-        <tr><td>popMin</td><td>INT</td><td>MINIMUM POPULARITY</td></tr>
-        <tr><td>speechMax</td><td>FLOAT</td><td>MAXIMUM SPEECHINESS</td></tr>
-        <tr><td>instMin</td><td>FLOAT</td><td>MINIMUM INSTRUMENTALNESS</td></tr>
-        <tr><td>timeSig</td><td>INT</td><td>TIME SIGNATURE</td></tr>
       </tbody>
     </table>
   </div>
@@ -298,10 +288,6 @@ input[type="text"]:focus { border-color: var(--green); }
       "title": "EVERYTHING IN ITS RIGHT PLACE",
       "bpm": 127.543,
       "key": "Db Minor",
-      "popularity": 68,
-      "speechiness": 0.041,
-      "instrumentalness": 0.312,
-      "time_signature": 4
     }
   ],
   "page": 0,

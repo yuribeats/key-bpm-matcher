@@ -118,7 +118,7 @@ ul {
   </div>
 
   <h2>WHAT THIS IS</h2>
-  <p>A searchable index of 254 million tracks with key, BPM, popularity, speechiness, instrumentalness, and time signature.</p>
+  <p>A searchable index of 254 million tracks with key and BPM.</p>
   <p>There is no other public tool that lets you search this many tracks by this many attributes at once.</p>
 
   <h2>SEARCH</h2>
@@ -129,20 +129,7 @@ ul {
   <ul>
     <li><strong>BPM</strong> - High reliability. Tempo detection is a solved problem. Trust these numbers.</li>
     <li><strong>Key</strong> - Low reliability. Key detection is the weakest attribute in the dataset. Major/minor distinction is frequently wrong. Use it as a starting point, not a guarantee.</li>
-    <li><strong>Popularity</strong> - High reliability. Directly reflects stream count relative to other tracks.</li>
-    <li><strong>Speechiness</strong> - Moderate reliability. Good at separating music from spoken word. Less precise in the middle range.</li>
-    <li><strong>Instrumentalness</strong> - Moderate reliability. Good at identifying purely instrumental tracks. Less precise for tracks with light vocals.</li>
-    <li><strong>Time signature</strong> - Low reliability. Detection is limited to 3/4, 4/4, and 5/4. Songs in 6/8, 7/8, or other meters get bucketed into the closest option.</li>
   </ul>
-
-  <h2>FILTERS</h2>
-  <ul>
-    <li><strong>Popularity</strong> (0 to 100): How many streams a track has relative to other tracks. Default minimum is 1, which removes 209 million dead or delisted tracks.</li>
-    <li><strong>Speechiness</strong> (0.0 to 1.0): How much of the track is spoken word. Default maximum is 0.33, which is the threshold for "probably speech." This removes podcasts and audiobooks.</li>
-    <li><strong>Instrumentalness</strong> (0.0 to 1.0): How likely the track has no vocals. Useful for finding beats, scores, and instrumentals.</li>
-    <li><strong>Time signature</strong>: Most tracks are 4/4. You can filter for 3/4 (waltzes, some ballads), 5/4 (odd time), or other.</li>
-  </ul>
-  <p>Hover over the ? next to each filter for a quick reminder. Click the X to disable a filter and hide its column.</p>
 
   <h2>BPM DECIMALS</h2>
   <p>The dropdown next to BPM range controls how many decimal places are shown. At 0, a track at 130.7 BPM displays as 131. This also widens pitch match results at lower precision.</p>
