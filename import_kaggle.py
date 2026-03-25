@@ -17,7 +17,7 @@ conn.execute("""
 conn.execute("DELETE FROM tracks")
 
 count = 0
-with open('/tmp/kaggle_spotify/dataset.csv', 'r', encoding='utf-8') as f:
+with open('/tmp/kaggle/dataset.csv', 'r', encoding='utf-8') as f:
     reader = csv.DictReader(f)
     batch = []
     for row in reader:

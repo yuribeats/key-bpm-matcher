@@ -8,7 +8,7 @@ conn = sqlite3.connect(":memory:")
 conn.execute("ATTACH DATABASE 'bpm.db' AS bdb")        # Waterloo BPM
 conn.execute("ATTACH DATABASE 'keys.db' AS kdb")        # SongKeyFinder
 conn.execute("ATTACH DATABASE 'duuzu.db' AS ddb")       # duuzu
-conn.execute("ATTACH DATABASE 'kaggle.db' AS kagdb")    # Kaggle Spotify
+conn.execute("ATTACH DATABASE 'kaggle.db' AS kagdb")    # Kaggle
 conn.execute("ATTACH DATABASE 'musicoset.db' AS mdb")   # MusicOSet
 
 HAS_AB = os.path.exists("acousticbrainz.db")
@@ -54,7 +54,7 @@ conn.execute("""
 """)
 print(f"After duuzu: {conn.execute('SELECT COUNT(*) FROM stage').fetchone()[0]}")
 
-# 4. Kaggle Spotify (has key + bpm + genre)
+# 4. Kaggle (has key + bpm + genre)
 conn.execute("""
     INSERT INTO stage (artist, title, bpm, key_name, genre, source)
     SELECT artist, title, bpm, key_name, genre, 'kaggle'
