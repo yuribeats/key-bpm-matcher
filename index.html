@@ -1626,11 +1626,31 @@ document.getElementById('menuTerms').addEventListener('click', () => {
   if (!wasOpen) { el.classList.add('open'); el.scrollIntoView({ behavior: 'smooth' }); }
 });
 
-document.getElementById('exportBtn').addEventListener('click', () => {
+document.getElementById('exportBtn').addEventListener('click', async () => {
   if (!currentTracks.length) return;
-  const cols = ['artist','title','bpm','key','popularity','speechiness','instrumentalness','time_signature'];
+  const btn = document.getElementById('exportBtn');
+  btn.textContent = 'EXPORTING...';
+  const cols = ['artist','title','bpm','key'];
+  const baseParams = buildParams(0);
+  baseParams.set('limit', '200');
+  let allTracks = [];
+  let pg = 0;
+  try {
+    while (allTracks.length < 10000) {
+      baseParams.set('page', pg);
+      const resp = await fetch('/api/search?' + baseParams.toString());
+      const data = await resp.json();
+      const batch = data.tracks || data.results || [];
+      allTracks = allTracks.concat(batch);
+      if (!data.hasMore || batch.length < 200) break;
+      pg++;
+    }
+  } catch (e) {
+    allTracks = currentTracks;
+  }
+  btn.textContent = 'EXPORT CSV';
   const header = cols.join(',');
-  const rows = currentTracks.map(t => cols.map(c => {
+  const rows = allTracks.map(t => cols.map(c => {
     let v = t[c];
     if (v == null) return '';
     if (typeof v === 'string') return '"' + v.replace(/"/g, '""') + '"';
