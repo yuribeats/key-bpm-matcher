@@ -616,7 +616,7 @@ input[type="text"]:focus { border-color: var(--green); }
       <div class="control-group">
         <label>BPM DECIMALS</label>
         <div class="alpha-filter" id="bpmDecFilter">
-          <div class="alpha-selected" id="bpmDecSelected">3</div>
+          <div class="alpha-selected" id="bpmDecSelected">0</div>
           <div class="alpha-dropdown" id="bpmDecDropdown"></div>
         </div>
       </div>
@@ -817,7 +817,7 @@ function initBpmDecDropdown() {
   const sel = document.getElementById('bpmDecSelected');
   [0,1,2,3].forEach(n => {
     const el = document.createElement('div');
-    el.className = 'alpha-option' + (n === 3 ? ' active' : '');
+    el.className = 'alpha-option' + (n === 0 ? ' active' : '');
     el.textContent = n;
     el.addEventListener('click', () => {
       bpmDecimals = n;
