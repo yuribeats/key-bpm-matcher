@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMELOT WHEEL — EVERY SONG</title>
+<meta name="description" content="Camelot wheel for harmonic mixing. Click any key to search 254 million tracks.">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+:root {
+  --bg: #000; --fg: #fff; --bg2: #111; --bg3: #0a0a0a;
+  --border: #333; --border2: #222;
+  --muted: #666; --muted2: #888;
+  --green: #228B22;
+}
+[data-theme="light"] {
+  --bg: #fff; --fg: #000; --bg2: #f0f0f0; --bg3: #f5f5f5;
+  --border: #ccc; --border2: #ddd;
+  --muted: #666; --muted2: #555;
+  --green: #228B22;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700;
+  text-transform: uppercase; font-size: 13px; line-height: 1.4;
+}
+a { color: var(--green); text-decoration: none; }
+.container { max-width: 720px; margin: 0 auto; padding: 20px; }
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+h1 { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
+.alpha-filter { position: relative; display: inline-block; }
+.alpha-selected {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+  font-size: 13px; padding: 8px 12px; min-width: 60px; cursor: default; user-select: none;
+}
+.alpha-dropdown {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  z-index: 100; white-space: nowrap;
+}
+.alpha-dropdown.open { display: block; }
+.alpha-option {
+  display: block; padding: 6px 12px; font-family: Arial, sans-serif;
+  font-weight: 700; text-transform: uppercase; font-size: 12px;
+  color: var(--fg); cursor: default; user-select: none; text-decoration: none;
+}
+.alpha-option:hover { background: var(--green); color: #000; }
+.hint { font-size: 10px; font-weight: 300; color: var(--muted); letter-spacing: 2px; margin-bottom: 16px; }
+.info-bar {
+  min-height: 68px; padding: 12px 16px;
+  border: 1px solid var(--border2); background: var(--bg2);
+  margin-bottom: 24px; display: flex; flex-direction: column; justify-content: center;
+}
+.info-bar .idle { font-size: 11px; font-weight: 300; color: var(--muted); }
+.info-bar .key-label { font-size: 16px; letter-spacing: 2px; color: var(--green); margin-bottom: 8px; }
+.info-bar .compat-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.info-bar .compat-label { font-size: 10px; font-weight: 300; color: var(--muted); letter-spacing: 1px; margin-right: 4px; }
+.compat-key {
+  font-size: 11px; padding: 4px 10px; border: 1px solid var(--green); color: var(--green);
+  cursor: default; user-select: none;
+}
+.compat-key:hover { background: var(--green); color: #000; }
+.wheel-wrap { display: flex; justify-content: center; margin-bottom: 20px; }
+.legend {
+  display: flex; justify-content: center; gap: 32px;
+  font-size: 10px; font-weight: 300; color: var(--muted); letter-spacing: 1px;
+}
+.legend-dot { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header-row">
+  <h1>CAMELOT WHEEL</h1>
+  <div class="alpha-filter" id="menuFilter">
+    <div class="alpha-selected" id="menuSelected">MENU</div>
+    <div class="alpha-dropdown" id="menuDropdown">
+      <div class="alpha-option" id="menuTheme">LIGHT</div>
+      <a href="/" class="alpha-option">SEARCH</a>
+      <a href="/manual.html" class="alpha-option">MANUAL</a>
+      <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
+      <a href="/dashboard.html" class="alpha-option">DASHBOARD</a>
+    </div>
+  </div>
+</div>
+
+<div class="hint">CLICK A KEY TO SEARCH &mdash; HOVER TO SEE COMPATIBLE KEYS</div>
+
+<div class="info-bar" id="infoBar">
+  <div class="idle">HOVER OVER A KEY</div>
+</div>
+
+<div class="wheel-wrap">
+  <svg id="wheel" viewBox="0 0 500 500" style="width:min(480px,100%);height:auto"></svg>
+</div>
+
+<div class="legend">
+  <div><span class="legend-dot" style="background:#1c1c1c;border:1px solid #3a3a3a"></span>MAJOR (B)</div>
+  <div><span class="legend-dot" style="background:#0d0d0d;border:1px solid #252525"></span>MINOR (A)</div>
+  <div><span class="legend-dot" style="background:#228B22;border:1px solid #228B22"></span>SELECTED</div>
+  <div><span class="legend-dot" style="background:#1a1a1a;border:2px solid #228B22"></span>COMPATIBLE</div>
+</div>
+
+</div>
+
+<script>
+const WHEEL_DATA = [
+  { num: 1,  major: 'B Major',   minor: 'Ab Minor',  majorNote: 'B',  minorNote: 'Ab' },
+  { num: 2,  major: 'F# Major',  minor: 'Eb Minor',  majorNote: 'F#', minorNote: 'Eb' },
+  { num: 3,  major: 'Db Major',  minor: 'Bb Minor',  majorNote: 'Db', minorNote: 'Bb' },
+  { num: 4,  major: 'Ab Major',  minor: 'F Minor',   majorNote: 'Ab', minorNote: 'F'  },
+  { num: 5,  major: 'Eb Major',  minor: 'C Minor',   majorNote: 'Eb', minorNote: 'C'  },
+  { num: 6,  major: 'Bb Major',  minor: 'G Minor',   majorNote: 'Bb', minorNote: 'G'  },
+  { num: 7,  major: 'F Major',   minor: 'D Minor',   majorNote: 'F',  minorNote: 'D'  },
+  { num: 8,  major: 'C Major',   minor: 'A Minor',   majorNote: 'C',  minorNote: 'A'  },
+  { num: 9,  major: 'G Major',   minor: 'E Minor',   majorNote: 'G',  minorNote: 'E'  },
+  { num: 10, major: 'D Major',   minor: 'B Minor',   majorNote: 'D',  minorNote: 'B'  },
+  { num: 11, major: 'A Major',   minor: 'F# Minor',  majorNote: 'A',  minorNote: 'F#' },
+  { num: 12, major: 'E Major',   minor: 'Db Minor',  majorNote: 'E',  minorNote: 'Db' },
+];
+
+const cx = 250, cy = 250;
+const R_INNER = 58;
+const R_MID = 148;
+const R_OUTER = 238;
+const GAP = 1.5;
+
+function toRad(d) { return d * Math.PI / 180; }
+
+function sectorPath(r1, r2, a1, a2) {
+  const x1 = cx + r1*Math.cos(a1), y1 = cy + r1*Math.sin(a1);
+  const x2 = cx + r2*Math.cos(a1), y2 = cy + r2*Math.sin(a1);
+  const x3 = cx + r2*Math.cos(a2), y3 = cy + r2*Math.sin(a2);
+  const x4 = cx + r1*Math.cos(a2), y4 = cy + r1*Math.sin(a2);
+  return `M ${x1} ${y1} L ${x2} ${y2} A ${r2} ${r2} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${r1} ${r1} 0 0 0 ${x1} ${y1} Z`;
+}
+
+function svgEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+const svg = document.getElementById('wheel');
+
+// Center
+svg.appendChild(svgEl('circle', { cx, cy, r: R_INNER - 2, fill: '#000', stroke: '#222', 'stroke-width': '1' }));
+const ct1 = svgEl('text', { x: cx, y: cy - 5, 'text-anchor': 'middle', fill: '#444', 'font-family': 'Arial,sans-serif', 'font-weight': '700', 'font-size': '9', 'letter-spacing': '1' });
+ct1.textContent = 'CAMELOT';
+svg.appendChild(ct1);
+const ct2 = svgEl('text', { x: cx, y: cy + 8, 'text-anchor': 'middle', fill: '#333', 'font-family': 'Arial,sans-serif', 'font-weight': '300', 'font-size': '8', 'letter-spacing': '1' });
+ct2.textContent = 'WHEEL';
+svg.appendChild(ct2);
+
+const segments = {};
+const segList = [];
+
+WHEEL_DATA.forEach((pos, i) => {
+  const startDeg = -90 + i * 30;
+  const midDeg = startDeg + 15;
+  const midRad = toRad(midDeg);
+  const a1 = toRad(startDeg + GAP / 2);
+  const a2 = toRad(startDeg + 30 - GAP / 2);
+  const flip = midDeg > 90;
+  const rot = flip ? midDeg + 180 : midDeg;
+
+  function makeRing(r1, r2, fill, stroke, id, key, note, labelNum, labelLetter, fontSize1, fontSize2) {
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.style.cursor = 'default';
+
+    const path = svgEl('path', { d: sectorPath(r1 + 1, r2 - 1, a1, a2), fill, stroke, 'stroke-width': '1' });
+    g.appendChild(path);
+
+    const midR = (r1 + r2) / 2;
+    const tx = cx + midR * Math.cos(midRad);
+    const ty = cy + midR * Math.sin(midRad);
+
+    const tg = svgEl('g', { transform: `translate(${tx},${ty}) rotate(${rot})` });
+
+    const t1 = svgEl('text', {
+      'text-anchor': 'middle', fill: '#fff', 'font-family': 'Arial,sans-serif',
+      'font-weight': '700', 'font-size': fontSize1, dy: '-2'
+    });
+    t1.textContent = labelNum + labelLetter;
+
+    const t2 = svgEl('text', {
+      'text-anchor': 'middle', fill: '#999', 'font-family': 'Arial,sans-serif',
+      'font-weight': '300', 'font-size': fontSize2, dy: String(parseInt(fontSize1) - 1)
+    });
+    t2.textContent = note;
+
+    tg.appendChild(t1);
+    tg.appendChild(t2);
+    g.appendChild(tg);
+
+    const seg = { g, path, num: pos.num, type: labelLetter, key, note, fill, stroke };
+    segments[id] = seg;
+    segList.push(seg);
+    svg.appendChild(g);
+  }
+
+  makeRing(R_MID, R_OUTER, '#1c1c1c', '#3a3a3a', pos.num + 'B', pos.major, pos.majorNote, pos.num, 'B', '13', '10');
+  makeRing(R_INNER, R_MID, '#0d0d0d', '#252525', pos.num + 'A', pos.minor, pos.minorNote, pos.num, 'A', '11', '9');
+});
+
+function compatible(num, type) {
+  const prev = ((num - 2 + 12) % 12) + 1;
+  const next = (num % 12) + 1;
+  const other = type === 'B' ? 'A' : 'B';
+  return ['' + num + other, '' + prev + type, '' + next + type];
+}
+
+function setState(id, state) {
+  const s = segments[id];
+  if (!s) return;
+  if (state === 'active') {
+    s.path.setAttribute('fill', '#228B22');
+    s.path.setAttribute('stroke', '#228B22');
+    s.path.setAttribute('stroke-width', '1');
+  } else if (state === 'compat') {
+    s.path.setAttribute('fill', '#1a1a1a');
+    s.path.setAttribute('stroke', '#228B22');
+    s.path.setAttribute('stroke-width', '2');
+  } else if (state === 'dim') {
+    s.path.setAttribute('fill', s.type === 'B' ? '#0e0e0e' : '#080808');
+    s.path.setAttribute('stroke', '#181818');
+    s.path.setAttribute('stroke-width', '1');
+  } else {
+    s.path.setAttribute('fill', s.fill);
+    s.path.setAttribute('stroke', s.stroke);
+    s.path.setAttribute('stroke-width', '1');
+  }
+}
+
+function resetAll() {
+  segList.forEach(s => setState(s.num + s.type, 'default'));
+}
+
+function showInfo(id) {
+  const s = segments[id];
+  if (!s) return;
+  const compat = compatible(s.num, s.type);
+  const bar = document.getElementById('infoBar');
+  const compatHtml = compat.map(cid => {
+    const cs = segments[cid];
+    if (!cs) return '';
+    const label = cs.type === 'B' ? cs.note + ' MAJOR' : cs.note + ' MINOR';
+    return `<span class="compat-key" data-key="${cs.key}">${cid} &mdash; ${label}</span>`;
+  }).join('');
+  const modeLabel = s.type === 'B' ? s.note + ' MAJOR' : s.note + ' MINOR';
+  bar.innerHTML = `
+    <div class="key-label">${s.num}${s.type} &mdash; ${modeLabel}</div>
+    <div class="compat-row">
+      <span class="compat-label">COMPATIBLE:</span>
+      ${compatHtml}
+    </div>
+  `;
+  bar.querySelectorAll('.compat-key').forEach(el => {
+    el.addEventListener('click', () => {
+      window.location.href = '/?key=' + encodeURIComponent(el.dataset.key);
+    });
+  });
+}
+
+function highlight(id) {
+  const s = segments[id];
+  if (!s) return;
+  const compat = compatible(s.num, s.type);
+  segList.forEach(seg => {
+    const sid = seg.num + seg.type;
+    if (sid === id) setState(sid, 'active');
+    else if (compat.includes(sid)) setState(sid, 'compat');
+    else setState(sid, 'dim');
+  });
+  showInfo(id);
+}
+
+segList.forEach(seg => {
+  const id = seg.num + seg.type;
+  seg.g.addEventListener('mouseenter', () => highlight(id));
+  seg.g.addEventListener('mouseleave', () => {
+    resetAll();
+    document.getElementById('infoBar').innerHTML = '<div class="idle">HOVER OVER A KEY</div>';
+  });
+  seg.g.addEventListener('click', () => {
+    window.location.href = '/?key=' + encodeURIComponent(seg.key);
+  });
+  seg.g.addEventListener('touchend', e => {
+    e.preventDefault();
+    highlight(id);
+  });
+});
+
+// Theme
+const saved = localStorage.getItem('kbm_theme');
+if (saved === 'light') {
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.getElementById('menuTheme').textContent = 'DARK';
+}
+document.getElementById('menuTheme').addEventListener('click', () => {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('menuTheme').textContent = 'LIGHT';
+    localStorage.setItem('kbm_theme', 'dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('menuTheme').textContent = 'DARK';
+    localStorage.setItem('kbm_theme', 'light');
+  }
+  document.getElementById('menuDropdown').classList.remove('open');
+});
+document.getElementById('menuSelected').addEventListener('click', () => {
+  document.getElementById('menuDropdown').classList.toggle('open');
+});
+document.addEventListener('click', e => {
+  if (!document.getElementById('menuFilter').contains(e.target))
+    document.getElementById('menuDropdown').classList.remove('open');
+});
+
+new Image().src = '/api/pageview?page=/camelot&_=' + Date.now();
+</script>
+</body>
+</html>

@@ -567,6 +567,7 @@ input[type="text"]:focus { border-color: var(--green); }
           <div class="alpha-option" id="menuTheme">LIGHT</div>
           <div class="alpha-option" id="menuFav">FAVORITES (<span id="favCount">0</span>)</div>
           <a href="/manual.html" class="alpha-option">MANUAL</a>
+          <a href="/camelot.html" class="alpha-option">CAMELOT WHEEL</a>
           <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
           <div class="alpha-option" id="menuPrivacy">PRIVACY</div>
           <div class="alpha-option" id="menuTerms">TERMS</div>
@@ -763,6 +764,22 @@ input[type="text"]:focus { border-color: var(--green); }
 
 <script>
 const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+const CAMELOT_MAP = {
+  'B Major': '1B',   'Ab Minor': '1A',  'G# Minor': '1A',
+  'F# Major': '2B',  'Gb Major': '2B',  'Eb Minor': '2A',  'D# Minor': '2A',
+  'Db Major': '3B',  'C# Major': '3B',  'Bb Minor': '3A',  'A# Minor': '3A',
+  'Ab Major': '4B',  'G# Major': '4B',  'F Minor': '4A',
+  'Eb Major': '5B',  'D# Major': '5B',  'C Minor': '5A',
+  'Bb Major': '6B',  'A# Major': '6B',  'G Minor': '6A',
+  'F Major': '7B',                       'D Minor': '7A',
+  'C Major': '8B',                       'A Minor': '8A',
+  'G Major': '9B',                       'E Minor': '9A',
+  'D Major': '10B',                      'B Minor': '10A',
+  'A Major': '11B',                      'F# Minor': '11A', 'Gb Minor': '11A',
+  'E Major': '12B',                      'Db Minor': '12A', 'C# Minor': '12A',
+};
+function camelotCode(key) { return CAMELOT_MAP[key] || ''; }
 const PER_PAGE = 100;
 
 let sortCol = 'popularity';
@@ -936,7 +953,9 @@ function initKeyDropdown(prefix, mode) {
     const k = n + ' ' + mode;
     const item = document.createElement('div');
     item.className = 'key-dropdown-item';
-    item.textContent = n;
+    item.dataset.key = k;
+    const code = camelotCode(k);
+    item.textContent = code ? code + '  ' + n : n;
     item.addEventListener('click', () => {
       NOTES.forEach(nn => selectedKeys.delete(nn + ' ' + mode));
       selectedKeys.add(k);
@@ -1022,6 +1041,23 @@ function init() {
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
   initColumnToggles();
+
+  const urlKey = new URLSearchParams(location.search).get('key');
+  if (urlKey) {
+    const mode = urlKey.includes('Minor') ? 'Minor' : 'Major';
+    const note = urlKey.split(' ')[0];
+    if (NOTES.includes(note)) {
+      const prefix = 'key' + mode;
+      const menu = document.getElementById(prefix + 'Menu');
+      const item = menu.querySelector('[data-key="' + urlKey + '"]');
+      if (item) {
+        item.click();
+        hasSearched = true;
+        document.getElementById('emptyState').style.display = 'none';
+        fetchTracks();
+      }
+    }
+  }
 
   document.querySelectorAll('.sortable').forEach(th => {
     th.addEventListener('click', () => {
@@ -1217,7 +1253,8 @@ function render(tracks) {
   const tbody = document.getElementById('results');
   tbody.innerHTML = tracks.map(t => {
     const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(bpmDecimals) : '-';
-    const keyStr = t.key ? esc(t.key) : '-';
+    const code = t.key ? camelotCode(t.key) : '';
+    const keyStr = t.key ? esc(t.key) + (code ? ' <span style="font-size:10px;font-weight:300;color:var(--muted)">' + code + '</span>' : '') : '-';
     const popStr = t.popularity != null ? t.popularity : '-';
     const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
     const instStr = t.instrumentalness != null ? parseFloat(t.instrumentalness).toFixed(2) : '-';
