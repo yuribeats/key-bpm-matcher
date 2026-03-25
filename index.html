@@ -214,10 +214,6 @@ input[type="text"]:focus { border-color: var(--green); }
 .control-group.col-disabled .alpha-filter { display: none; }
 .control-group.col-disabled label { color: var(--muted4); }
 
-.results-table.hide-pop th:nth-child(6), .results-table.hide-pop td:nth-child(6) { display: none; }
-.results-table.hide-speech th:nth-child(7), .results-table.hide-speech td:nth-child(7) { display: none; }
-.results-table.hide-inst th:nth-child(8), .results-table.hide-inst td:nth-child(8) { display: none; }
-.results-table.hide-ts th:nth-child(9), .results-table.hide-ts td:nth-child(9) { display: none; }
 
 .bpm-control {
   display: flex;
@@ -626,41 +622,6 @@ input[type="text"]:focus { border-color: var(--green); }
   </div>
 
   <div class="filters-row">
-    <div class="control-group" data-col="pop">
-      <label class="label-with-tip"><span class="col-toggle" data-col="pop">X</span> <span class="tip-trigger">?<span class="tip-text">0-100. HIGHER = MORE STREAMS.</span></span> POPULARITY</label>
-      <div class="range-control">
-        <input type="text" id="popMin" placeholder="MIN" value="1">
-        <span style="color:var(--muted4)">-</span>
-        <input type="text" id="popMax" placeholder="MAX" value="">
-      </div>
-    </div>
-
-    <div class="control-group" data-col="speech">
-      <label class="label-with-tip"><span class="col-toggle" data-col="speech">X</span> <span class="tip-trigger">?<span class="tip-text">0.0-1.0. LOWER = MORE MUSIC. HIGHER = SPOKEN WORD.</span></span> SPEECHINESS</label>
-      <div class="range-control">
-        <input type="text" id="speechMin" placeholder="MIN" value="">
-        <span style="color:var(--muted4)">-</span>
-        <input type="text" id="speechMax" placeholder="MAX" value="0.33">
-      </div>
-    </div>
-
-    <div class="control-group" data-col="inst">
-      <label class="label-with-tip"><span class="col-toggle" data-col="inst">X</span> <span class="tip-trigger">?<span class="tip-text">0.0-1.0. HIGHER = NO VOCALS.</span></span> INSTRUMENTALNESS</label>
-      <div class="range-control">
-        <input type="text" id="instMin" placeholder="MIN" value="">
-        <span style="color:var(--muted4)">-</span>
-        <input type="text" id="instMax" placeholder="MAX" value="">
-      </div>
-    </div>
-
-    <div class="control-group" data-col="ts">
-      <label class="label-with-tip"><span class="col-toggle" data-col="ts">X</span> <span class="tip-trigger">?<span class="tip-text">BEATS PER MEASURE</span></span> TIME SIG</label>
-      <div class="alpha-filter" id="tsFilter">
-        <div class="alpha-selected" id="tsSelected">ANY</div>
-        <div class="alpha-dropdown" id="tsDropdown"></div>
-      </div>
-    </div>
-
     <div class="control-group">
       <label>STARTS WITH</label>
       <div style="display:flex;gap:8px;align-items:center">
@@ -691,10 +652,6 @@ input[type="text"]:focus { border-color: var(--green); }
         <th class="sortable" data-sort="title">TITLE <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="bpm">BPM <span class="sort-arrow"></span></th>
         <th class="sortable" data-sort="key">KEY <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="popularity">POP <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="speechiness">SPEECH <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="instrumentalness">INST <span class="sort-arrow"></span></th>
-        <th class="sortable" data-sort="time_signature">TS <span class="sort-arrow"></span></th>
       </tr>
     </thead>
     <tbody id="results"></tbody>
@@ -1037,11 +994,9 @@ function init() {
   initTheme();
   initAlphaFilter();
   initBpmDecDropdown();
-  initTsDropdown();
 
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
-  initColumnToggles();
 
   const urlKey = new URLSearchParams(location.search).get('key');
   if (urlKey) {
@@ -1123,13 +1078,13 @@ function buildParams(pageNum) {
   const title = document.getElementById('searchTitle').value.trim();
   const bpmMin = document.getElementById('bpmMin').value.trim();
   const bpmMax = document.getElementById('bpmMax').value.trim();
-  const popMin = document.getElementById('popMin').value.trim();
-  const popMax = document.getElementById('popMax').value.trim();
-  const speechMin = document.getElementById('speechMin').value.trim();
-  const speechMax = document.getElementById('speechMax').value.trim();
-  const instMin = document.getElementById('instMin').value.trim();
-  const instMax = document.getElementById('instMax').value.trim();
-  const timeSig = selectedTimeSig;
+  const popMin = '1';
+  const popMax = '';
+  const speechMin = '';
+  const speechMax = '0.33';
+  const instMin = '';
+  const instMax = '';
+  const timeSig = '';
   const params = new URLSearchParams();
   if (artist) params.set('artist', artist);
   if (title) params.set('title', title);
@@ -1256,10 +1211,6 @@ function render(tracks) {
     const bpmStr = t.bpm != null ? parseFloat(t.bpm).toFixed(bpmDecimals) : '-';
     const code = t.key ? camelotCode(t.key) : '';
     const keyStr = t.key ? esc(t.key) + (code ? ' <span style="font-size:10px;font-weight:300;color:var(--muted)">' + code + '</span>' : '') : '-';
-    const popStr = t.popularity != null ? t.popularity : '-';
-    const speechStr = t.speechiness != null ? parseFloat(t.speechiness).toFixed(2) : '-';
-    const instStr = t.instrumentalness != null ? parseFloat(t.instrumentalness).toFixed(2) : '-';
-    const tsStr = t.time_signature != null ? ([3,4,5].includes(t.time_signature) ? t.time_signature + '/4' : 'OTHER') : '-';
     const favClass = isFavorited(t.artist, t.title) ? ' favorited' : '';
     return `<tr>
       <td><span class="fav-star${favClass}" data-artist="${escAttr(t.artist)}" data-title="${escAttr(t.title)}" data-bpm="${t.bpm || ''}" data-key="${escAttr(t.key || '')}" data-pop="${t.popularity || ''}" data-ts="${t.time_signature || ''}">${favClass ? '\u2605' : '\u2606'}</span></td>
@@ -1267,10 +1218,6 @@ function render(tracks) {
       <td class="title-link" data-title="${escAttr(t.title)}">${esc(t.title)}</td>
       <td class="bpm-cell bpm-link" data-bpm="${bpmStr}">${bpmStr}</td>
       <td class="key-cell">${keyStr}</td>
-      <td class="pop-cell">${popStr}</td>
-      <td class="pop-cell">${speechStr}</td>
-      <td class="pop-cell">${instStr}</td>
-      <td class="ts-cell">${tsStr}</td>
     </tr>`;
   }).join('');
 
@@ -1465,9 +1412,9 @@ async function fetchPitchMatch() {
   const bpmMax = document.getElementById('bpmMax').value.trim();
   const range = document.getElementById('pmRange').value;
   const q = [document.getElementById('searchArtist').value.trim(), document.getElementById('searchTitle').value.trim()].filter(Boolean).join(' ');
-  const popMin = document.getElementById('popMin').value.trim();
-  const speechMax = document.getElementById('speechMax').value.trim();
-  const instMin = document.getElementById('instMin').value.trim();
+  const popMin = '1';
+  const speechMax = '0.33';
+  const instMin = '';
 
   document.getElementById('pmResults').innerHTML = '<div style="color:#666;font-size:11px;font-weight:300">SEARCHING PITCH MATCHES...</div>';
 
