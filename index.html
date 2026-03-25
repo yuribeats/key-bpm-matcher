@@ -1498,6 +1498,7 @@ function renderPitchMatch(results, targetKey, targetBpm, targetKeys) {
     }
   }
   const seenIds = new Set();
+  let html = '';
 
   for (const group of sorted) {
     group.tracks = group.tracks.filter(t => {
