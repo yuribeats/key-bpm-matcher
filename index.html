@@ -557,7 +557,6 @@ input[type="text"]:focus { border-color: var(--green); }
   <div class="header-row">
     <h1>EVERY SONG</h1>
     <div style="display:flex;gap:8px;align-items:center">
-      <div class="toggle-btn" id="keyModeToggle">CAMELOT</div>
       <div class="alpha-filter" id="menuFilter">
         <div class="alpha-selected" id="menuSelected">MENU</div>
         <div class="alpha-dropdown" id="menuDropdown" style="right:0;left:auto;white-space:nowrap">
@@ -943,7 +942,6 @@ function initKeyDropdown(prefix, mode) {
 
 function applyKeyDisplay() {
   const isCamelot = keyDisplay === 'camelot';
-  document.getElementById('keyModeToggle').classList.toggle('active', isCamelot);
   document.getElementById('keyMajorLabel').textContent = isCamelot ? 'KEY (B)' : 'KEY (MAJOR)';
   document.getElementById('keyMinorLabel').textContent = isCamelot ? 'KEY (A)' : 'KEY (MINOR)';
   ['keyMajor', 'keyMinor'].forEach(prefix => {
@@ -1605,11 +1603,6 @@ document.getElementById('pmRange').addEventListener('input', e => {
   if (pmOpen) fetchPitchMatch();
 });
 
-document.getElementById('keyModeToggle').addEventListener('click', () => {
-  keyDisplay = keyDisplay === 'written' ? 'camelot' : 'written';
-  localStorage.setItem('kbm_key_display', keyDisplay);
-  applyKeyDisplay();
-});
 applyKeyDisplay();
 
 document.getElementById('menuSelected').addEventListener('click', () => {
