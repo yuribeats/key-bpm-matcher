@@ -667,7 +667,7 @@ input[type="text"]:focus { border-color: var(--green); }
         <input type="range" id="pmRange" min="1" max="10" value="3" style="width:120px;accent-color:#228B22">
       </div>
       <div class="toggle-btn" id="relKeyToggle" style="display:none">INCLUDE RELATIVE KEYS</div>
-      <div class="toggle-btn" id="camelotModeToggle" style="display:none">CAMELOT MODE</div>
+      <div class="toggle-btn" id="camelotModeToggle" style="display:none">CAMELOT OFF</div>
     </div>
     <div id="pmResults"></div>
   </div>
@@ -1383,7 +1383,7 @@ function escAttr(s) {
 
 let pmOpen = false;
 let includeRelativeKeys = false;
-let camelotMode = false;
+let camelotMode = localStorage.getItem('kbm_camelot_mode') === '1';
 
 function camelotCompatible(srcKey, tgtKey) {
   const src = camelotCode(srcKey);
@@ -1592,9 +1592,17 @@ document.getElementById('relKeyToggle').addEventListener('click', () => {
   if (pmOpen) fetchPitchMatch();
 });
 
+function updateCamelotBtn() {
+  const btn = document.getElementById('camelotModeToggle');
+  btn.classList.toggle('active', camelotMode);
+  btn.textContent = camelotMode ? '\u2713 CAMELOT ON' : 'CAMELOT OFF';
+  btn.style.pointerEvents = camelotMode ? 'none' : '';
+  btn.style.opacity = camelotMode ? '1' : '';
+}
 document.getElementById('camelotModeToggle').addEventListener('click', () => {
   camelotMode = !camelotMode;
-  document.getElementById('camelotModeToggle').classList.toggle('active', camelotMode);
+  localStorage.setItem('kbm_camelot_mode', camelotMode ? '1' : '0');
+  updateCamelotBtn();
   if (pmOpen) fetchPitchMatch();
 });
 
@@ -1604,6 +1612,7 @@ document.getElementById('pmRange').addEventListener('input', e => {
 });
 
 applyKeyDisplay();
+updateCamelotBtn();
 
 document.getElementById('menuSelected').addEventListener('click', () => {
   document.getElementById('menuDropdown').classList.toggle('open');
