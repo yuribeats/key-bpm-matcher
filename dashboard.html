@@ -10,6 +10,10 @@
   --bg: #000; --fg: #fff; --bg2: #111; --bg3: #0a0a0a;
   --border: #333; --muted: #666; --green: #228B22;
 }
+[data-theme="light"] {
+  --bg: #fff; --fg: #000; --bg2: #f0f0f0; --bg3: #f5f5f5;
+  --border: #ccc; --muted: #666; --green: #228B22;
+}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--bg); color: var(--fg);
@@ -69,7 +73,7 @@ a:hover { color: var(--green); }
   transition: width 0.5s ease;
 }
 .chart-bar .bar.green { background: var(--green); }
-.chart-bar .bar.white { background: var(--fg); opacity: 0.3; }
+.chart-bar .bar.white { background: var(--muted); opacity: 0.5; }
 .chart-bar .count { font-size: 11px; color: var(--muted); margin-left: 8px; }
 .chart-legend { font-size: 10px; color: var(--muted); margin-bottom: 12px; }
 .chart-legend span { margin-right: 16px; }
@@ -122,6 +126,7 @@ a:hover { color: var(--green); }
   <div class="alpha-filter" id="menuFilter">
     <div class="alpha-selected" id="menuSelected">MENU</div>
     <div class="alpha-dropdown" id="menuDropdown">
+      <div class="alpha-option" id="menuTheme">LIGHT</div>
       <a href="/" class="alpha-option">SEARCH</a>
       <a href="/manual.html" class="alpha-option">MANUAL</a>
       <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
@@ -259,6 +264,26 @@ async function loadStats() {
 
 loadStats();
 setInterval(loadStats, 30000);
+
+// Theme
+var themeSaved = localStorage.getItem('kbm_theme');
+if (themeSaved === 'light') {
+  document.documentElement.setAttribute('data-theme', 'light');
+  document.getElementById('menuTheme').textContent = 'DARK';
+}
+document.getElementById('menuTheme').addEventListener('click', function() {
+  var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('menuTheme').textContent = 'LIGHT';
+    localStorage.setItem('kbm_theme', 'dark');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('menuTheme').textContent = 'DARK';
+    localStorage.setItem('kbm_theme', 'light');
+  }
+  document.getElementById('menuDropdown').classList.remove('open');
+});
 
 // Menu toggle
 document.getElementById('menuFilter').addEventListener('click', function(e) {
