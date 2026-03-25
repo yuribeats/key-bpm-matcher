@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/yuribeats/key-bpm-matcher#readme",
   "dependencies": {
-    "@libsql/client": "^0.17.2"
+    "@libsql/client": "^0.17.2",
+    "@vercel/edge": "^1.2.2"
   }
 }
