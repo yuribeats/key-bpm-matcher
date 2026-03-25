@@ -69,6 +69,12 @@ h1 { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
   font-size: 10px; font-weight: 300; color: var(--muted); letter-spacing: 1px;
 }
 .legend-dot { display: inline-block; width: 12px; height: 12px; margin-right: 6px; vertical-align: middle; }
+.toggle-btn {
+  background: var(--bg2); border: 2px solid var(--border); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+  font-size: 11px; padding: 8px 16px; cursor: default; user-select: none;
+}
+.toggle-btn.active { background: var(--green); border-color: var(--green); color: #000; }
 </style>
 </head>
 <body>
@@ -108,7 +114,7 @@ h1 { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
 </div>
 
 <div style="display:flex;justify-content:center;margin-top:24px">
-  <a href="/?display=camelot" style="background:#228B22;border:2px solid #228B22;color:#000;font-family:Arial,sans-serif;font-weight:700;text-transform:uppercase;font-size:11px;padding:8px 16px;text-decoration:none;user-select:none">CAMELOT ON</a>
+  <div class="toggle-btn" id="camelotModeToggle">CAMELOT OFF</div>
 </div>
 
 </div>
@@ -327,6 +333,20 @@ document.addEventListener('click', e => {
   if (!document.getElementById('menuFilter').contains(e.target))
     document.getElementById('menuDropdown').classList.remove('open');
 });
+
+let camelotMode = localStorage.getItem('kbm_camelot_mode') === '1';
+function updateCamelotBtn() {
+  const btn = document.getElementById('camelotModeToggle');
+  btn.classList.toggle('active', camelotMode);
+  btn.textContent = camelotMode ? '\u2713 CAMELOT ON' : 'CAMELOT OFF';
+  btn.style.pointerEvents = camelotMode ? 'none' : '';
+}
+document.getElementById('camelotModeToggle').addEventListener('click', () => {
+  camelotMode = true;
+  localStorage.setItem('kbm_camelot_mode', '1');
+  updateCamelotBtn();
+});
+updateCamelotBtn();
 
 new Image().src = '/api/pageview?page=/camelot&_=' + Date.now();
 </script>

@@ -667,7 +667,6 @@ input[type="text"]:focus { border-color: var(--green); }
         <input type="range" id="pmRange" min="1" max="10" value="3" style="width:120px;accent-color:#228B22">
       </div>
       <div class="toggle-btn" id="relKeyToggle" style="display:none">INCLUDE RELATIVE KEYS</div>
-      <div class="toggle-btn" id="camelotModeToggle" style="display:none">CAMELOT OFF</div>
     </div>
     <div id="pmResults"></div>
   </div>
@@ -1582,7 +1581,6 @@ document.getElementById('pmBtn').addEventListener('click', () => {
   document.getElementById('pmBtn').classList.toggle('active', pmOpen);
   document.getElementById('pmRangeGroup').style.display = pmOpen ? '' : 'none';
   document.getElementById('relKeyToggle').style.display = pmOpen ? '' : 'none';
-  document.getElementById('camelotModeToggle').style.display = pmOpen ? '' : 'none';
   if (pmOpen) fetchPitchMatch();
   else document.getElementById('pmResults').innerHTML = '';
 });
@@ -1593,27 +1591,12 @@ document.getElementById('relKeyToggle').addEventListener('click', () => {
   if (pmOpen) fetchPitchMatch();
 });
 
-function updateCamelotBtn() {
-  const btn = document.getElementById('camelotModeToggle');
-  btn.classList.toggle('active', camelotMode);
-  btn.textContent = camelotMode ? '\u2713 CAMELOT ON' : 'CAMELOT OFF';
-  btn.style.pointerEvents = camelotMode ? 'none' : '';
-  btn.style.opacity = camelotMode ? '1' : '';
-}
-document.getElementById('camelotModeToggle').addEventListener('click', () => {
-  camelotMode = !camelotMode;
-  localStorage.setItem('kbm_camelot_mode', camelotMode ? '1' : '0');
-  updateCamelotBtn();
-  if (pmOpen) fetchPitchMatch();
-});
-
 document.getElementById('pmRange').addEventListener('input', e => {
   document.getElementById('pmRangeVal').textContent = e.target.value;
   if (pmOpen) fetchPitchMatch();
 });
 
 applyKeyDisplay();
-updateCamelotBtn();
 
 document.getElementById('menuSelected').addEventListener('click', () => {
   document.getElementById('menuDropdown').classList.toggle('open');
