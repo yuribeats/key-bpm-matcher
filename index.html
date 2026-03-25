@@ -710,6 +710,7 @@ input[type="text"]:focus { border-color: var(--green); }
         <input type="range" id="pmRange" min="1" max="10" value="3" style="width:120px;accent-color:#228B22">
       </div>
       <div class="toggle-btn" id="relKeyToggle" style="display:none">INCLUDE RELATIVE KEYS</div>
+      <div class="toggle-btn" id="camelotModeToggle" style="display:none">CAMELOT MODE</div>
     </div>
     <div id="pmResults"></div>
   </div>
@@ -1406,6 +1407,22 @@ function escAttr(s) {
 
 let pmOpen = false;
 let includeRelativeKeys = false;
+let camelotMode = false;
+
+function camelotCompatible(srcKey, tgtKey) {
+  const src = camelotCode(srcKey);
+  const tgt = camelotCode(tgtKey);
+  if (!src || !tgt) return false;
+  const srcNum = parseInt(src), srcType = src.slice(-1);
+  const tgtNum = parseInt(tgt), tgtType = tgt.slice(-1);
+  if (srcNum === tgtNum && srcType !== tgtType) return true;
+  if (srcType === tgtType) {
+    const prev = ((tgtNum - 2 + 12) % 12) + 1;
+    const next = (tgtNum % 12) + 1;
+    if (srcNum === prev || srcNum === next) return true;
+  }
+  return false;
+}
 
 function getRelativeKey(keyName) {
   const parts = keyName.split(' ');
@@ -1481,21 +1498,28 @@ async function fetchPitchMatch() {
     responses.forEach((data, i) => {
       if (data.results) allResults = allResults.concat(data.results);
     });
-    renderPitchMatch(allResults, searchKeys.join(' + '), bpmMin || bpmMax);
+    renderPitchMatch(allResults, searchKeys.join(' + '), bpmMin || bpmMax, searchKeys);
   } catch {
     document.getElementById('pmResults').innerHTML = '<div style="color:red;font-size:11px">PITCH MATCH FAILED</div>';
   }
 }
 
-function renderPitchMatch(results, targetKey, targetBpm) {
+function renderPitchMatch(results, targetKey, targetBpm, targetKeys) {
   const container = document.getElementById('pmResults');
   if (!results || results.length === 0) {
     container.innerHTML = '<div class="pm-empty">NO PITCH MATCHES FOUND</div>';
     return;
   }
 
-  let html = '';
-  const sorted = results.slice().sort((a, b) => Math.abs(a.shift) - Math.abs(b.shift));
+  let sorted = results.slice().sort((a, b) => Math.abs(a.shift) - Math.abs(b.shift));
+
+  if (camelotMode && targetKeys && targetKeys.length) {
+    sorted = sorted.filter(g => targetKeys.some(tk => camelotCompatible(g.sourceKey, tk)));
+    if (!sorted.length) {
+      container.innerHTML = '<div class="pm-empty">NO CAMELOT-COMPATIBLE MATCHES FOUND</div>';
+      return;
+    }
+  }
   const seenIds = new Set();
 
   for (const group of sorted) {
@@ -1510,10 +1534,12 @@ function renderPitchMatch(results, targetKey, targetBpm) {
       : group.sourceBpmMin.toFixed(bpmDecimals) + '-' + group.sourceBpmMax.toFixed(bpmDecimals);
 
     html += '<div class="pm-group">';
+    const srcCode = camelotCode(group.sourceKey);
+    const srcCodeStr = srcCode ? ` <span style="color:var(--green);font-size:10px">${srcCode}</span>` : '';
     html += `<div class="pm-group-header">
       <span class="shift-label">${dir}${group.shift} SEMITONE${Math.abs(group.shift) > 1 ? 'S' : ''}</span>
       <span class="arrow">&mdash;</span>
-      ${esc(group.sourceKey)} @ ${bpmRange} BPM
+      ${esc(group.sourceKey)}${srcCodeStr} @ ${bpmRange} BPM
       <span class="arrow">&rarr;</span>
       <span class="target-label">${esc(targetKey)} @ ${parseFloat(targetBpm).toFixed(bpmDecimals)} BPM</span>
       <span style="color:#666;font-size:10px;margin-left:8px">(${group.tracks.length} TRACK${group.tracks.length !== 1 ? 'S' : ''})</span>
@@ -1578,6 +1604,7 @@ document.getElementById('pmBtn').addEventListener('click', () => {
   document.getElementById('pmBtn').classList.toggle('active', pmOpen);
   document.getElementById('pmRangeGroup').style.display = pmOpen ? '' : 'none';
   document.getElementById('relKeyToggle').style.display = pmOpen ? '' : 'none';
+  document.getElementById('camelotModeToggle').style.display = pmOpen ? '' : 'none';
   if (pmOpen) fetchPitchMatch();
   else document.getElementById('pmResults').innerHTML = '';
 });
@@ -1585,6 +1612,12 @@ document.getElementById('pmBtn').addEventListener('click', () => {
 document.getElementById('relKeyToggle').addEventListener('click', () => {
   includeRelativeKeys = !includeRelativeKeys;
   document.getElementById('relKeyToggle').classList.toggle('active', includeRelativeKeys);
+  if (pmOpen) fetchPitchMatch();
+});
+
+document.getElementById('camelotModeToggle').addEventListener('click', () => {
+  camelotMode = !camelotMode;
+  document.getElementById('camelotModeToggle').classList.toggle('active', camelotMode);
   if (pmOpen) fetchPitchMatch();
 });
 
