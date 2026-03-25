@@ -1381,7 +1381,7 @@ function escAttr(s) {
 
 let pmOpen = false;
 let includeRelativeKeys = false;
-let camelotMode = localStorage.getItem('kbm_camelot_mode') === '1';
+let camelotMode = false;
 
 function camelotCompatible(srcKey, tgtKey) {
   const src = camelotCode(srcKey);
