@@ -1022,7 +1022,12 @@ function init() {
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
 
-  const urlKey = new URLSearchParams(location.search).get('key');
+  const urlParams = new URLSearchParams(location.search);
+  if (urlParams.get('display') === 'camelot') {
+    keyDisplay = 'camelot';
+    localStorage.setItem('kbm_key_display', 'camelot');
+  }
+  const urlKey = urlParams.get('key');
   if (urlKey) {
     const mode = urlKey.includes('Minor') ? 'Minor' : 'Major';
     const note = urlKey.split(' ')[0];

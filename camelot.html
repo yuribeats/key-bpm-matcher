@@ -84,6 +84,8 @@ h1 { font-size: 22px; font-weight: 300; letter-spacing: 2px; }
       <a href="/manual.html" class="alpha-option">MANUAL</a>
       <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
       <a href="/dashboard.html" class="alpha-option">DASHBOARD</a>
+      <a href="https://slowedandreverbed.com" class="alpha-option">SLOWED AND REVERBED</a>
+      <a href="https://studio-2026-03-19.vercel.app" class="alpha-option">STUDIO</a>
     </div>
   </div>
 </div>
@@ -261,7 +263,7 @@ function showInfo(id) {
   `;
   bar.querySelectorAll('.compat-key').forEach(el => {
     el.addEventListener('click', () => {
-      window.location.href = '/?key=' + encodeURIComponent(el.dataset.key);
+      window.location.href = '/?key=' + encodeURIComponent(el.dataset.key) + '&display=camelot';
     });
   });
 }
@@ -287,7 +289,7 @@ segList.forEach(seg => {
     document.getElementById('infoBar').innerHTML = '<div class="idle">HOVER OVER A KEY</div>';
   });
   seg.g.addEventListener('click', () => {
-    window.location.href = '/?key=' + encodeURIComponent(seg.key);
+    window.location.href = '/?key=' + encodeURIComponent(seg.key) + '&display=camelot';
   });
   seg.g.addEventListener('touchend', e => {
     e.preventDefault();
