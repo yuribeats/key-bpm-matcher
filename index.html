@@ -721,7 +721,7 @@ input[type="text"]:focus { border-color: var(--green); }
 
 <script>
 const NOTES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-let keyDisplay = localStorage.getItem('kbm_key_display') || 'written';
+let keyDisplay = 'written';
 
 const CAMELOT_MAP = {
   'B Major': '1B',   'Ab Minor': '1A',  'G# Minor': '1A',
@@ -1022,7 +1022,6 @@ function init() {
   const urlParams = new URLSearchParams(location.search);
   if (urlParams.get('display') === 'camelot') {
     keyDisplay = 'camelot';
-    localStorage.setItem('kbm_key_display', 'camelot');
   }
   const urlKey = urlParams.get('key');
   if (urlKey) {

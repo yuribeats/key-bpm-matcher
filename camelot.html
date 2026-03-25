@@ -339,11 +339,10 @@ function updateCamelotBtn() {
   const btn = document.getElementById('camelotModeToggle');
   btn.classList.toggle('active', camelotMode);
   btn.textContent = camelotMode ? '\u2713 CAMELOT ON' : 'CAMELOT OFF';
-  btn.style.pointerEvents = camelotMode ? 'none' : '';
 }
 document.getElementById('camelotModeToggle').addEventListener('click', () => {
-  camelotMode = true;
-  localStorage.setItem('kbm_camelot_mode', '1');
+  camelotMode = !camelotMode;
+  localStorage.setItem('kbm_camelot_mode', camelotMode ? '1' : '0');
   updateCamelotBtn();
 });
 updateCamelotBtn();
