@@ -84,22 +84,6 @@ a:hover { color: var(--green); }
   font-size: 12px;
 }
 .endpoint-row .name { color: var(--muted); }
-.tweet-section {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;
-}
-.tweet-embed { min-height: 300px; }
-.tweet-cta {
-  background: var(--bg2); border: 1px solid var(--border);
-  padding: 32px; text-align: center;
-}
-.tweet-cta p { font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
-.tweet-cta .rt-btn {
-  display: inline-block; background: var(--fg); color: var(--bg);
-  padding: 12px 32px; font-family: Arial, sans-serif; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 2px; font-size: 12px;
-  border: none; text-decoration: none;
-}
-.tweet-cta .rt-btn:hover { background: var(--green); color: var(--fg); }
 .live-dot {
   display: inline-block; width: 6px; height: 6px;
   background: var(--green); border-radius: 50%;
@@ -188,17 +172,6 @@ a:hover { color: var(--green); }
 <div class="section">
   <h2>ENDPOINTS — TODAY</h2>
   <div id="endpoints"></div>
-</div>
-
-<div class="section">
-  <h2>SPREAD THE WORD</h2>
-  <div class="tweet-section">
-    <div class="tweet-embed" id="tweetEmbed"></div>
-    <div class="tweet-cta">
-      <p>EVERY SONG IS FREE AND OPEN SOURCE. IF YOU FIND IT USEFUL, SHARE IT.</p>
-      <a href="https://twitter.com/intent/retweet?tweet_id=2036398957514117175" target="_blank" class="rt-btn">RETWEET</a>
-    </div>
-  </div>
 </div>
 
 <div style="margin-top:60px;padding-top:20px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
@@ -298,23 +271,6 @@ document.addEventListener('click', function(e) {
 // Track this page view
 new Image().src = '/api/pageview?page=/dashboard&_=' + Date.now();
 
-// Twitter embed
-window.twttr = (function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
-  if (d.getElementById(id)) return t;
-  js = d.createElement(s); js.id = id;
-  js.src = "https://platform.twitter.com/widgets.js";
-  fjs.parentNode.insertBefore(js, fjs);
-  t._e = []; t.ready = function(f) { t._e.push(f); };
-  return t;
-}(document, "script", "twitter-wjs"));
-
-twttr.ready(function() {
-  twttr.widgets.createTweet('2036398957514117175', document.getElementById('tweetEmbed'), {
-    theme: 'dark',
-    dnt: true
-  });
-});
 </script>
 
 <script defer src="/_vercel/insights/script.js"></script>
