@@ -169,15 +169,43 @@ input[type="text"]:focus { border-color: var(--green); }
   font-size: 11px;
 }
 .dev-param-table td:first-child { font-family: monospace; text-transform: none; color: var(--green); }
+.alpha-filter { position: relative; display: inline-block; }
+.alpha-selected {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+  font-size: 13px; padding: 8px 12px; min-width: 60px; cursor: default; user-select: none;
+}
+.alpha-dropdown {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  z-index: 100; min-width: 60px; white-space: nowrap;
+}
+.alpha-dropdown.open { display: block; }
+.alpha-option {
+  display: block; padding: 6px 12px; font-family: Arial, sans-serif;
+  font-weight: 700; text-transform: uppercase; font-size: 12px;
+  color: var(--fg); cursor: default; user-select: none; text-decoration: none;
+}
+.alpha-option:hover { background: var(--green); color: #000; }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header-row">
-    <h1>DEVELOPERS</h1>
+    <a href="/" style="color:var(--fg);text-decoration:none"><h1>EVERY SONG</h1></a>
     <div style="display:flex;gap:8px;align-items:center">
-      <div class="toggle-btn" id="themeToggle">LIGHT</div>
-      <a href="/" class="back-link">BACK TO SEARCH</a>
+      <div class="alpha-filter" id="menuFilter">
+        <div class="alpha-selected" id="menuSelected">MENU</div>
+        <div class="alpha-dropdown" id="menuDropdown">
+          <div class="alpha-option" id="menuTheme">LIGHT</div>
+          <a href="/" class="alpha-option">SEARCH</a>
+          <a href="/manual.html" class="alpha-option">MANUAL</a>
+          <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
+          <a href="/dashboard.html" class="alpha-option">DASHBOARD</a>
+          <a href="https://slowedandreverbed.com" class="alpha-option">SLOWED AND REVERBED</a>
+          <a href="https://studio-2026-03-19.vercel.app" class="alpha-option">STUDIO</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -290,22 +318,28 @@ input[type="text"]:focus { border-color: var(--green); }
 const saved = localStorage.getItem('kbm_theme');
 if (saved === 'light') {
   document.documentElement.setAttribute('data-theme', 'light');
-  document.getElementById('themeToggle').textContent = 'DARK';
-  document.getElementById('themeToggle').classList.add('active');
+  document.getElementById('menuTheme').textContent = 'DARK';
 }
-document.getElementById('themeToggle').addEventListener('click', () => {
+document.getElementById('menuTheme').addEventListener('click', () => {
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   if (isLight) {
     document.documentElement.removeAttribute('data-theme');
-    document.getElementById('themeToggle').textContent = 'LIGHT';
-    document.getElementById('themeToggle').classList.remove('active');
+    document.getElementById('menuTheme').textContent = 'LIGHT';
     localStorage.setItem('kbm_theme', 'dark');
   } else {
     document.documentElement.setAttribute('data-theme', 'light');
-    document.getElementById('themeToggle').textContent = 'DARK';
-    document.getElementById('themeToggle').classList.add('active');
+    document.getElementById('menuTheme').textContent = 'DARK';
     localStorage.setItem('kbm_theme', 'light');
   }
+  document.getElementById('menuDropdown').classList.remove('open');
+});
+document.getElementById('menuFilter').addEventListener('click', (e) => {
+  if (e.target.closest('.alpha-dropdown')) return;
+  document.getElementById('menuDropdown').classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('menuFilter').contains(e.target))
+    document.getElementById('menuDropdown').classList.remove('open');
 });
 
 document.getElementById('devRegisterBtn').addEventListener('click', async () => {

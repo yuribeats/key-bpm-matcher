@@ -24,7 +24,24 @@ a:hover { color: var(--green); }
   border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 40px;
 }
 .header h1 { font-size: 18px; letter-spacing: 3px; }
-.back { font-size: 12px; color: var(--muted); }
+.alpha-filter { position: relative; display: inline-block; }
+.alpha-selected {
+  background: var(--bg2); border: 1px solid var(--border); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase;
+  font-size: 13px; padding: 8px 12px; min-width: 60px; cursor: default; user-select: none;
+}
+.alpha-dropdown {
+  display: none; position: absolute; top: 100%; right: 0;
+  background: var(--bg2); border: 1px solid var(--border);
+  z-index: 100; min-width: 60px; white-space: nowrap;
+}
+.alpha-dropdown.open { display: block; }
+.alpha-option {
+  display: block; padding: 6px 12px; font-family: Arial, sans-serif;
+  font-weight: 700; text-transform: uppercase; font-size: 12px;
+  color: var(--fg); cursor: default; user-select: none; text-decoration: none;
+}
+.alpha-option:hover { background: var(--green); color: #000; }
 .grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 20px; margin-bottom: 40px;
@@ -101,8 +118,18 @@ a:hover { color: var(--green); }
 <body>
 
 <div class="header">
-  <h1><span class="live-dot"></span> EVERY SONG DASHBOARD</h1>
-  <a href="/" class="back">BACK TO SEARCH</a>
+  <a href="/" style="color:var(--fg);text-decoration:none"><h1><span class="live-dot"></span> EVERY SONG</h1></a>
+  <div class="alpha-filter" id="menuFilter">
+    <div class="alpha-selected" id="menuSelected">MENU</div>
+    <div class="alpha-dropdown" id="menuDropdown">
+      <a href="/" class="alpha-option">SEARCH</a>
+      <a href="/manual.html" class="alpha-option">MANUAL</a>
+      <a href="/developers.html" class="alpha-option">DEVELOPERS</a>
+      <a href="/dashboard.html" class="alpha-option">DASHBOARD</a>
+      <a href="https://slowedandreverbed.com" class="alpha-option">SLOWED AND REVERBED</a>
+      <a href="https://studio-2026-03-19.vercel.app" class="alpha-option">STUDIO</a>
+    </div>
+  </div>
 </div>
 
 <div class="grid">
@@ -232,6 +259,16 @@ async function loadStats() {
 
 loadStats();
 setInterval(loadStats, 30000);
+
+// Menu toggle
+document.getElementById('menuFilter').addEventListener('click', function(e) {
+  if (e.target.closest('.alpha-dropdown')) return;
+  document.getElementById('menuDropdown').classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+  if (!document.getElementById('menuFilter').contains(e.target))
+    document.getElementById('menuDropdown').classList.remove('open');
+});
 
 // Track this page view
 new Image().src = '/api/pageview?page=/dashboard&_=' + Date.now();
