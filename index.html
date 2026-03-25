@@ -574,6 +574,7 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
   </div>
 
+  <form id="searchForm" onsubmit="return false" action="javascript:void(0)">
   <div class="controls">
     <div class="controls-row">
       <div class="control-group">
@@ -667,7 +668,8 @@ input[type="text"]:focus { border-color: var(--green); }
     </div>
   </div>
 
-  <div class="search-btn" id="searchBtn">SEARCH</div>
+  <button type="submit" class="search-btn" id="searchBtn" style="border:none;background:inherit;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;width:100%">SEARCH</button>
+  </form>
 
   <div class="filter-pills" id="filterPills"></div>
 
@@ -1028,6 +1030,14 @@ function init() {
       page = 0;
       fetchTracks();
     });
+  });
+
+  document.getElementById('searchForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    page = 0;
+    hasSearched = true;
+    document.getElementById('emptyState').style.display = 'none';
+    fetchTracks();
   });
 
   document.getElementById('searchBtn').addEventListener('click', () => {
