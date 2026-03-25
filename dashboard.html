@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EVERY SONG — DASHBOARD</title>
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<style>
+:root {
+  --bg: #000; --fg: #fff; --bg2: #111; --bg3: #0a0a0a;
+  --border: #333; --muted: #666; --green: #228B22;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: Arial, sans-serif; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 40px 20px; max-width: 1200px; margin: 0 auto;
+}
+a { color: var(--fg); text-decoration: none; }
+a:hover { color: var(--green); }
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 40px;
+}
+.header h1 { font-size: 18px; letter-spacing: 3px; }
+.back { font-size: 12px; color: var(--muted); }
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px; margin-bottom: 40px;
+}
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  padding: 24px;
+}
+.stat-card .label { font-size: 10px; color: var(--muted); margin-bottom: 8px; letter-spacing: 2px; }
+.stat-card .value { font-size: 32px; letter-spacing: 2px; }
+.stat-card .value.green { color: var(--green); }
+.stat-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.section { margin-bottom: 40px; }
+.section h2 {
+  font-size: 12px; color: var(--muted); letter-spacing: 3px;
+  border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 20px;
+}
+.chart-container { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.chart-bar {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+}
+.chart-bar .date { font-size: 11px; color: var(--muted); width: 80px; flex-shrink: 0; }
+.chart-bar .bar {
+  height: 24px; min-width: 2px;
+  transition: width 0.5s ease;
+}
+.chart-bar .bar.green { background: var(--green); }
+.chart-bar .bar.white { background: var(--fg); opacity: 0.3; }
+.chart-bar .count { font-size: 11px; color: var(--muted); margin-left: 8px; }
+.chart-legend { font-size: 10px; color: var(--muted); margin-bottom: 12px; }
+.chart-legend span { margin-right: 16px; }
+.chart-legend .dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; vertical-align: middle; }
+.endpoint-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--bg3);
+  font-size: 12px;
+}
+.endpoint-row .name { color: var(--muted); }
+.tweet-section {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start;
+}
+.tweet-embed { min-height: 300px; }
+.tweet-cta {
+  background: var(--bg2); border: 1px solid var(--border);
+  padding: 32px; text-align: center;
+}
+.tweet-cta p { font-size: 14px; margin-bottom: 20px; line-height: 1.6; }
+.tweet-cta .rt-btn {
+  display: inline-block; background: var(--fg); color: var(--bg);
+  padding: 12px 32px; font-family: Arial, sans-serif; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px; font-size: 12px;
+  border: none; text-decoration: none;
+}
+.tweet-cta .rt-btn:hover { background: var(--green); color: var(--fg); }
+.live-dot {
+  display: inline-block; width: 6px; height: 6px;
+  background: var(--green); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@media (max-width: 768px) {
+  .tweet-section { grid-template-columns: 1fr; }
+  .chart-container { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span class="live-dot"></span> EVERY SONG DASHBOARD</h1>
+  <a href="/" class="back">BACK TO SEARCH</a>
+</div>
+
+<div class="grid">
+  <div class="stat-card">
+    <div class="label">VISITORS TODAY</div>
+    <div class="value green" id="visitorsToday">—</div>
+    <div class="sub" id="pageviewsToday"></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">API REQUESTS TODAY</div>
+    <div class="value green" id="todayRequests">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">TOTAL API REQUESTS</div>
+    <div class="value" id="totalRequests">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">API KEYS REGISTERED</div>
+    <div class="value" id="totalKeys">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="label">SERVER UPTIME</div>
+    <div class="value" id="uptime">—</div>
+    <div class="sub" id="memUsage"></div>
+  </div>
+  <div class="stat-card">
+    <div class="label">DATABASE</div>
+    <div class="value">254M</div>
+    <div class="sub">TRACKS INDEXED</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>LAST 7 DAYS</h2>
+  <div class="chart-legend">
+    <span><span class="dot" style="background:var(--green)"></span> API REQUESTS</span>
+    <span><span class="dot" style="background:var(--fg);opacity:0.3"></span> PAGE VIEWS</span>
+  </div>
+  <div class="chart-container">
+    <div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px">API REQUESTS</div>
+      <div id="chartRequests"></div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:12px">VISITORS / PAGE VIEWS</div>
+      <div id="chartVisitors"></div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>ENDPOINTS — TODAY</h2>
+  <div id="endpoints"></div>
+</div>
+
+<div class="section">
+  <h2>SPREAD THE WORD</h2>
+  <div class="tweet-section">
+    <div class="tweet-embed" id="tweetEmbed"></div>
+    <div class="tweet-cta">
+      <p>EVERY SONG IS FREE AND OPEN SOURCE. IF YOU FIND IT USEFUL, SHARE IT.</p>
+      <a href="https://twitter.com/intent/retweet?tweet_id=2036398957514117175" target="_blank" class="rt-btn">RETWEET</a>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:60px;padding-top:20px;border-top:1px solid var(--border);font-size:10px;color:var(--muted);display:flex;justify-content:space-between">
+  <span>UPDATES EVERY 30 SECONDS</span>
+  <span id="lastUpdate"></span>
+</div>
+
+<script>
+function formatUptime(seconds) {
+  var d = Math.floor(seconds / 86400);
+  var h = Math.floor((seconds % 86400) / 3600);
+  var m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return d + 'D ' + h + 'H';
+  if (h > 0) return h + 'H ' + m + 'M';
+  return m + 'M';
+}
+
+function fmt(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function barRow(dateStr, count, maxCount, cls) {
+  var pct = Math.max((count / maxCount) * 100, 1);
+  return '<div class="chart-bar"><span class="date">' + dateStr + '</span><div class="bar ' + cls + '" style="width:' + pct + '%"></div><span class="count">' + fmt(count) + '</span></div>';
+}
+
+async function loadStats() {
+  try {
+    var res = await fetch('/api/stats');
+    var data = await res.json();
+
+    document.getElementById('visitorsToday').textContent = fmt(data.visitorsToday);
+    document.getElementById('pageviewsToday').textContent = fmt(data.pageviewsToday) + ' PAGE VIEWS';
+    document.getElementById('todayRequests').textContent = fmt(data.todayRequests);
+    document.getElementById('totalRequests').textContent = fmt(data.totalRequests);
+    document.getElementById('totalKeys').textContent = data.totalKeys;
+    document.getElementById('uptime').textContent = formatUptime(data.serverUptime);
+    document.getElementById('memUsage').textContent = data.memUsage + ' MB RAM';
+
+    var maxReq = Math.max.apply(null, data.last7.map(function(d) { return d.count; }).concat([1]));
+    var reqHtml = data.last7.map(function(d) { return barRow(d.date.slice(5), d.count, maxReq, 'green'); }).join('');
+    document.getElementById('chartRequests').innerHTML = reqHtml || '<div style="font-size:12px;color:var(--muted)">NO DATA YET</div>';
+
+    var maxPv = Math.max.apply(null, (data.pageviews7 || []).map(function(d) { return d.views || 0; }).concat([1]));
+    var pvHtml = (data.pageviews7 || []).map(function(d) {
+      return barRow(d.date.slice(5), d.visitors || 0, maxPv, 'white') +
+        '<div style="font-size:9px;color:var(--muted);margin-left:92px;margin-top:-4px;margin-bottom:8px">' + fmt(d.views || 0) + ' VIEWS</div>';
+    }).join('');
+    document.getElementById('chartVisitors').innerHTML = pvHtml || '<div style="font-size:12px;color:var(--muted)">COLLECTING DATA...</div>';
+
+    var epHtml = data.topEndpoints.map(function(e) {
+      return '<div class="endpoint-row"><span class="name">' + e.endpoint + '</span><span>' + fmt(e.count) + '</span></div>';
+    }).join('');
+    document.getElementById('endpoints').innerHTML = epHtml || '<div style="font-size:12px;color:var(--muted)">NO DATA YET</div>';
+
+    document.getElementById('lastUpdate').textContent = 'LAST UPDATED: ' + new Date().toLocaleTimeString().toUpperCase();
+  } catch (e) {
+    console.error('Stats load failed:', e);
+  }
+}
+
+loadStats();
+setInterval(loadStats, 30000);
+
+// Track this page view
+new Image().src = '/api/pageview?page=/dashboard&_=' + Date.now();
+
+// Twitter embed
+window.twttr = (function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0], t = window.twttr || {};
+  if (d.getElementById(id)) return t;
+  js = d.createElement(s); js.id = id;
+  js.src = "https://platform.twitter.com/widgets.js";
+  fjs.parentNode.insertBefore(js, fjs);
+  t._e = []; t.ready = function(f) { t._e.push(f); };
+  return t;
+}(document, "script", "twitter-wjs"));
+
+twttr.ready(function() {
+  twttr.widgets.createTweet('2036398957514117175', document.getElementById('tweetEmbed'), {
+    theme: 'dark',
+    dnt: true
+  });
+});
+</script>
+
+<script defer src="/_vercel/insights/script.js"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Y5DHE8MYGN"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-Y5DHE8MYGN');</script>
+
+</body>
+</html>
