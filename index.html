@@ -611,13 +611,6 @@ input[type="text"]:focus { border-color: var(--green); }
           <input type="text" id="bpmMax" placeholder="MAX" value="">
         </div>
       </div>
-      <div class="control-group">
-        <label>BPM DECIMALS</label>
-        <div class="alpha-filter" id="bpmDecFilter">
-          <div class="alpha-selected" id="bpmDecSelected">0</div>
-          <div class="alpha-dropdown" id="bpmDecDropdown"></div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -754,7 +747,7 @@ let lastSearchParams = '';
 let alphaFilter = '';
 let alphaField = 'artist';
 let selectedTimeSig = '';
-let bpmDecimals = 0;
+const bpmDecimals = 0;
 
 function getFavorites() {
   try {
@@ -788,28 +781,6 @@ function isFavorited(artist, title) {
   return !!favs[(artist + '|||' + title).toLowerCase()];
 }
 
-function initBpmDecDropdown() {
-  const dd = document.getElementById('bpmDecDropdown');
-  const sel = document.getElementById('bpmDecSelected');
-  [0,1,2,3].forEach(n => {
-    const el = document.createElement('div');
-    el.className = 'alpha-option' + (n === 0 ? ' active' : '');
-    el.textContent = n;
-    el.addEventListener('click', () => {
-      bpmDecimals = n;
-      sel.textContent = n;
-      dd.classList.remove('open');
-      dd.querySelectorAll('.alpha-option').forEach(o => o.classList.remove('active'));
-      el.classList.add('active');
-      if (hasSearched) render(currentTracks);
-    });
-    dd.appendChild(el);
-  });
-  sel.addEventListener('click', () => dd.classList.toggle('open'));
-  document.addEventListener('click', e => {
-    if (!document.getElementById('bpmDecFilter').contains(e.target)) dd.classList.remove('open');
-  });
-}
 
 function initTsDropdown() {
   const dd = document.getElementById('tsDropdown');
@@ -1014,7 +985,6 @@ function init() {
   document.getElementById('favCount').textContent = Object.keys(getFavorites()).length;
   initTheme();
   initAlphaFilter();
-  initBpmDecDropdown();
 
   initKeyDropdown('keyMajor', 'Major');
   initKeyDropdown('keyMinor', 'Minor');
