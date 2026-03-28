@@ -1083,7 +1083,6 @@ function buildParams(pageNum) {
   const params = new URLSearchParams();
   if (artist) params.set('artist', artist);
   if (title) params.set('title', title);
-  if (artist || title) params.set('q', [artist, title].filter(Boolean).join(' '));
   if (selectedKeys.size > 0) params.set('key', Array.from(selectedKeys).join(','));
   if (bpmMin) params.set('bpmMin', bpmMin);
   if (bpmMax) params.set('bpmMax', bpmMax);
